@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: Wealth Core — Phase 4 Client Decision Gate
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090
+
+paths:
+  /recommendations/{recommendationId}/decision:
+    post:
+      tags: [Client — Decision Gate]
+      operationId: submitRecommendationDecision
+      parameters:
+        - name: recommendationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientDecisionRequest'
+      responses:
+        '201':
+          description: Decision recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientDecisionResponse'
+
+components:
+  schemas:
+    ClientDecisionRequest:
+      type: object
+      required: [decisionStatus]
+      properties:
+        decisionStatus:
+          type: string
+          enum: [APPROVED, REJECTED]
+    ClientDecisionResponse:
+      type: object
+      properties:
+        decisionId:
+          type: string
+          format: uuid
+        recommendationId:
+          type: string
+          format: uuid
+        decisionStatus:
+          type: string
+        decidedAt:
+          type: string
+          format: date-time
+        financialPlanId:
+          type: string
+          format: uuid
+        financialPlanStatus:
+          type: string
+        planApproved:
+          type: boolean

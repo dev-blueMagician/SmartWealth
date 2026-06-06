@@ -1,0 +1,145 @@
+openapi: 3.0.3
+info:
+  title: Wealth Core — Phase 3 WM Planning
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090
+
+paths:
+  /clients/{clientId}/plans:
+    post:
+      tags: [WM — Planning]
+      operationId: createFinancialPlanDraft
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanDraftSeedRequest'
+      responses:
+        '201':
+          description: Draft plan created (v1)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialPlanVersionResponse'
+
+  /plans/{planId}/draft:
+    post:
+      tags: [WM — Planning]
+      operationId: runPlanDraftCalculation
+      description: Placeholder tính toán — merge vào content JSON
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanCalculationStubRequest'
+      responses:
+        '200':
+          description: Content updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialPlanVersionResponse'
+
+  /plans/{planVersionId}/recommendations:
+    post:
+      tags: [WM — Recommendation]
+      operationId: createPlanRecommendation
+      parameters:
+        - name: planVersionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: financial_plan.id (plan version record)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WmRecommendationCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WmRecommendationResponse'
+
+components:
+  schemas:
+    PlanDraftSeedRequest:
+      type: object
+      properties:
+        note:
+          type: string
+    PlanCalculationStubRequest:
+      type: object
+      properties:
+        scenarioKey:
+          type: string
+        assumptions:
+          type: object
+          additionalProperties: true
+    FinancialPlanVersionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        versionNo:
+          type: integer
+        approved:
+          type: boolean
+        content:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+    WmRecommendationCreateRequest:
+      type: object
+      required: [recType]
+      properties:
+        recType:
+          type: string
+        summary:
+          type: string
+    WmRecommendationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        planVersionId:
+          type: string
+          format: uuid
+        recType:
+          type: string
+        summary:
+          type: string
+        createdAt:
+          type: string
+          format: date-time

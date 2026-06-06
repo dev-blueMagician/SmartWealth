@@ -1,0 +1,252 @@
+openapi: 3.0.3
+info:
+  title: Wealth Core — Phase 2 Client Data
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090
+
+paths:
+  /mobile/register:
+    post:
+      tags: [Client — Registration]
+      operationId: mobileRegister
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileRegisterRequest'
+      responses:
+        '200':
+          description: Client activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileRegisterResponse'
+
+  /clients/{clientId}/profile:
+    put:
+      tags: [Client — Profile]
+      operationId: updateClientProfile
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientProfileUpdateRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientProfileResponse'
+
+  /clients/{clientId}/assets:
+    get:
+      tags: [Client — Discovery]
+      operationId: listClientAssets
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DiscoveryAssetResponse'
+    post:
+      tags: [Client — Discovery]
+      operationId: createClientAsset
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryAssetRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoveryAssetResponse'
+
+  /clients/{clientId}/goals:
+    get:
+      tags: [Client — Discovery]
+      operationId: listClientGoals
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DiscoveryGoalResponse'
+    post:
+      tags: [Client — Discovery]
+      operationId: createClientGoal
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryGoalRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoveryGoalResponse'
+
+  /cases/{caseId}/discovery/check:
+    post:
+      tags: [Client — Discovery]
+      operationId: markDiscoveryReady
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Case ready for planning
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoveryCheckResponse'
+
+components:
+  schemas:
+    MobileRegisterRequest:
+      type: object
+      required: [clientId]
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        deviceId:
+          type: string
+    MobileRegisterResponse:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        completedTask:
+          type: string
+    ClientProfileUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        riskProfile:
+          type: string
+        residency:
+          type: string
+    ClientProfileResponse:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        riskProfile:
+          type: string
+        residency:
+          type: string
+        completedTask:
+          type: string
+    DiscoveryAssetRequest:
+      type: object
+      required: [assetType, value]
+      properties:
+        assetType:
+          type: string
+        value:
+          type: number
+    DiscoveryAssetResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        assetType:
+          type: string
+        value:
+          type: number
+    DiscoveryGoalRequest:
+      type: object
+      required: [goalType, targetAmount]
+      properties:
+        goalType:
+          type: string
+        targetAmount:
+          type: number
+    DiscoveryGoalResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        goalType:
+          type: string
+        targetAmount:
+          type: number
+    DiscoveryCheckResponse:
+      type: object
+      properties:
+        caseId:
+          type: string
+          format: uuid
+        caseStatus:
+          type: string
+        message:
+          type: string

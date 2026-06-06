@@ -1,0 +1,19 @@
+target/
+
+# Local case chat uploads (see wealth.case-chat.upload-directory)
+data/
+
+.idea/
+*.iml
+.DS_Store
+
+# JVM crash dumps
+hs_err_pid*
+replay_pid*
+
+# Logs
+*.log
+
+# Spring Boot — local overrides (secrets / machine-specific)
+application-local.yml
+application-local.properties

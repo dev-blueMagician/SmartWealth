@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+.venv/
+venv/
+env/
+
+dist/
+build/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Local env & tooling
+.env
+.env.*
+!.env.example

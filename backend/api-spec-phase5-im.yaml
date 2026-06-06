@@ -1,0 +1,54 @@
+openapi: 3.0.3
+info:
+  title: Wealth Core — Phase 5 IM Pre-Execution
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090
+
+paths:
+  /execution/instructions:
+    post:
+      tags: [IM — Instructions]
+      operationId: createExecutionInstruction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionInstructionCreateRequest'
+      responses:
+        '201':
+          description: Draft instruction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionInstructionResponse'
+
+components:
+  schemas:
+    ExecutionInstructionCreateRequest:
+      type: object
+      required: [recommendationId]
+      properties:
+        recommendationId:
+          type: string
+          format: uuid
+        note:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+    ExecutionInstructionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        recommendationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time

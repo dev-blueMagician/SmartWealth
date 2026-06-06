@@ -1,0 +1,794 @@
+openapi: 3.1.0
+info:
+  title: SmartWealth Integration API
+  version: "0.2.0"
+  description: |
+    **Public integration contract** for SmartWealth AI Engine.
+
+    This API is the *partner-facing* mặt phẳng on top of the internal
+    Backend (Spring) and AI-engine (FastAPI). It exposes a curated subset
+    of business flows: onboarding, discovery, planning, decision,
+    execution, AI catalog — and an AI-powered chat channel.
+
+    All endpoints are versioned under `/api/integration/v1`, and use
+    machine-to-machine credentials (API key or OAuth2 client credentials).
+  contact:
+    name: SmartWealth Developer Support
+    email: developers@smartwealth.example
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://sandbox.smartwealth.example
+    description: Sandbox
+  - url: https://api.smartwealth.example
+    description: Production
+
+tags:
+  - name: Cases
+    description: Khởi tạo & truy vấn case khách hàng.
+  - name: Discovery
+    description: Đẩy dữ liệu discovery (assets, goals, profile) và trigger readiness.
+  - name: Plans
+    description: Tạo plan, draft tính toán, đọc recommendation.
+  - name: Recommendations
+    description: Quản lý vòng đời recommendation và quyết định.
+  - name: Execution
+    description: Tạo và gửi lệnh execution.
+  - name: AI Catalog
+    description: Đọc mapping case_phase → AI-xx.
+  - name: Chat
+    description: Chat channel AI-powered gắn liền với case lifecycle.
+  - name: Webhooks
+    description: Sự kiện gửi đi từ SmartWealth tới đối tác.
+
+security:
+  - ApiKeyAuth: []
+  - OAuth2ClientCredentials: [integration]
+
+paths:
+  /api/integration/v1/cases:
+    post:
+      tags: [Cases]
+      summary: Tạo case mới
+      operationId: createCase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCaseRequest"
+            examples:
+              default:
+                value:
+                  clientName: Nguyen Van A
+                  rmNote: Onboarded via partner portal
+      responses:
+        "201":
+          description: Case đã tạo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    get:
+      tags: [Cases]
+      summary: Liệt kê case
+      operationId: listCases
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Case" }
+
+  /api/integration/v1/cases/{caseId}:
+    get:
+      tags: [Cases]
+      summary: Đọc 1 case
+      operationId: getCase
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Case" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/integration/v1/cases/{caseId}/discovery/check:
+    post:
+      tags: [Discovery]
+      summary: Trigger discovery readiness (onboarding_completeness)
+      description: |
+        Đồng bộ với luồng portal `POST /cases/{caseId}/discovery/check`.
+        Nội bộ sẽ gọi AI-engine để chấm `onboarding_completeness` và trả
+        `caseStatus` mới (`READY` | `MISSING_DATA`).
+      operationId: checkDiscovery
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryCheckResult" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/integration/v1/clients/{clientId}/assets:
+    post:
+      tags: [Discovery]
+      summary: Thêm asset
+      operationId: createAsset
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assetType, value]
+              properties:
+                assetType: { type: string, example: CASH }
+                value: { type: number, example: 1000000000 }
+      responses:
+        "201":
+          description: Đã tạo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Asset" }
+
+  /api/integration/v1/clients/{clientId}/goals:
+    post:
+      tags: [Discovery]
+      summary: Thêm goal
+      operationId: createGoal
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [goalType, targetAmount]
+              properties:
+                goalType: { type: string, example: RETIREMENT }
+                targetAmount: { type: number, example: 5000000000 }
+      responses:
+        "201":
+          description: Đã tạo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Goal" }
+
+  /api/integration/v1/clients/{clientId}/profile:
+    put:
+      tags: [Discovery]
+      summary: Cập nhật profile khách hàng
+      operationId: updateProfile
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200": { description: OK }
+
+  /api/integration/v1/clients/{clientId}/plans:
+    post:
+      tags: [Plans]
+      summary: Tạo plan cho khách hàng
+      operationId: createPlan
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note: { type: string }
+      responses:
+        "201":
+          description: Đã tạo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Plan" }
+    get:
+      tags: [Plans]
+      summary: Liệt kê plan của khách hàng
+      operationId: listClientPlans
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Plan" }
+
+  /api/integration/v1/plans/{planId}/draft:
+    post:
+      tags: [Plans]
+      summary: Chạy tính toán draft cho plan
+      operationId: runPlanDraft
+      parameters:
+        - in: path
+          name: planId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scenarioKey]
+              properties:
+                scenarioKey: { type: string, example: BASE }
+                assumptions:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "200": { description: OK }
+
+  /api/integration/v1/plans/{planVersionId}/recommendations:
+    get:
+      tags: [Recommendations]
+      summary: Liệt kê recommendation theo plan version
+      operationId: listPlanRecommendations
+      parameters:
+        - in: path
+          name: planVersionId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Recommendation" }
+    post:
+      tags: [Recommendations]
+      summary: Tạo recommendation
+      operationId: createRecommendation
+      parameters:
+        - in: path
+          name: planVersionId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recType, summary]
+              properties:
+                recType: { type: string, example: REBALANCE }
+                summary: { type: string }
+      responses:
+        "201":
+          description: Đã tạo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Recommendation" }
+
+  /api/integration/v1/recommendations/{recommendationId}/decision:
+    post:
+      tags: [Recommendations]
+      summary: Submit quyết định approve/reject
+      operationId: submitDecision
+      parameters:
+        - in: path
+          name: recommendationId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decisionStatus]
+              properties:
+                decisionStatus:
+                  type: string
+                  enum: [APPROVED, REJECTED]
+      responses:
+        "200": { description: OK }
+
+  /api/integration/v1/execution/instructions:
+    post:
+      tags: [Execution]
+      summary: Tạo execution instruction từ recommendation
+      operationId: createExecutionInstruction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recommendationId]
+              properties:
+                recommendationId: { type: string, format: uuid }
+                note: { type: string }
+                payload:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "201":
+          description: Đã tạo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExecutionInstruction" }
+
+  /api/integration/v1/execution/send:
+    post:
+      tags: [Execution]
+      summary: Gửi execution instruction
+      operationId: sendExecutionInstruction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [instructionId]
+              properties:
+                instructionId: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExecutionInstruction" }
+
+  /api/integration/v1/ai-catalog/case-phases:
+    get:
+      tags: [AI Catalog]
+      summary: Liệt kê case phase và mapping AI-xx
+      operationId: listCasePhaseAssessments
+      parameters:
+        - in: query
+          name: case_phase
+          schema: { type: string, example: ONBOARDING }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version: { type: string }
+                  phase_order:
+                    type: array
+                    items: { type: string }
+                  phases:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items: { $ref: "#/components/schemas/AssessmentRef" }
+
+  /api/integration/v1/ai-catalog/case-phases/{phaseCode}:
+    get:
+      tags: [AI Catalog]
+      summary: Đọc 1 case phase
+      operationId: getCasePhase
+      parameters:
+        - in: path
+          name: phaseCode
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AssessmentRef" }
+
+  /api/integration/v1/cases/{caseId}/chat/thread:
+    get:
+      tags: [Chat]
+      summary: Lấy hoặc tạo chat thread cho case
+      description: |
+        Mỗi case có một thread mặc định (channel = CASE_CHAT).
+        Endpoint này idempotent — trả thread hiện tại hoặc tạo mới nếu chưa có.
+      operationId: getOrCreateChatThread
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Thread hiện tại hoặc vừa tạo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatThread" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/integration/v1/cases/{caseId}/chat/messages:
+    get:
+      tags: [Chat]
+      summary: Liệt kê tin nhắn trong thread
+      operationId: listChatMessages
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: threadId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ChatMessage" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      tags: [Chat]
+      summary: Gửi tin nhắn và nhận reply AI
+      description: |
+        Gửi tin nhắn user, backend forward tới AI-engine kèm case context
+        (phase, assessment, client data). Trả về cả user message lẫn AI reply
+        đồng bộ.
+      operationId: sendChatMessage
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChatSendRequest" }
+      responses:
+        "201":
+          description: Message đã tạo + AI reply
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatSendResponse" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/integration/v1/cases/{caseId}/chat/detect-intent:
+    post:
+      tags: [Chat]
+      summary: Phân loại intent của tin nhắn (không gửi)
+      description: |
+        Gọi AI-engine intent classifier mà không persist message.
+        Trả về intentCode, phaseCode, assessmentCode và confidence.
+      operationId: detectChatIntent
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                threadId: { type: string, format: uuid }
+                message: { type: string, example: "I want to add a new asset" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatIntentResult" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/integration/v1/cases/{caseId}/chat/attachments:
+    post:
+      tags: [Chat]
+      summary: Upload tài liệu đính kèm cho chat
+      description: |
+        Upload file (PDF, ảnh) gắn với case. Trả về caseDocumentId để
+        truyền vào attachmentIds khi gửi message.
+      operationId: uploadChatAttachment
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                docKind:
+                  type: string
+                  example: ID_CARD
+      responses:
+        "201":
+          description: Đã upload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatAttachment" }
+        "413":
+          description: File quá lớn (> 10MB)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/integration/v1/webhooks/test:
+    post:
+      tags: [Webhooks]
+      summary: (Sandbox) gửi sự kiện test tới URL của đối tác
+      operationId: sendWebhookTest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, eventType]
+              properties:
+                url: { type: string, format: uri }
+                eventType:
+                  type: string
+                  enum:
+                    - case.discovery.ready
+                    - recommendation.created
+                    - execution.sent
+      responses:
+        "202": { description: Đã đẩy event vào queue thử nghiệm }
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |
+        Header `Authorization: Bearer sk_<env>_<random>`.
+        Sandbox keys: prefix `sk_sandbox_…` ; Production: `sk_live_…`.
+    OAuth2ClientCredentials:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.smartwealth.example/oauth/token
+          scopes:
+            integration: Toàn bộ scope tích hợp đối tác
+
+  responses:
+    BadRequest:
+      description: Yêu cầu không hợp lệ
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Thiếu hoặc sai credential
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Không tìm thấy
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, example: MISSING_REQUIRED_FIELD }
+        message: { type: string }
+        details:
+          type: object
+          additionalProperties: true
+
+    CreateCaseRequest:
+      type: object
+      required: [clientName]
+      properties:
+        clientName: { type: string }
+        rmNote: { type: string }
+
+    Case:
+      type: object
+      properties:
+        caseId: { type: string, format: uuid }
+        clientId: { type: string, format: uuid }
+        workflowId: { type: string, format: uuid }
+        clientName: { type: string }
+        phase: { type: string, example: ONBOARDING }
+        status: { type: string, example: INITIALIZED }
+        createdAt: { type: string, format: date-time }
+
+    DiscoveryCheckResult:
+      type: object
+      properties:
+        caseStatus:
+          type: string
+          enum: [READY, MISSING_DATA]
+        missingFields:
+          type: array
+          items: { type: string }
+        assessmentCode: { type: string, example: "onboarding_completeness" }
+
+    Asset:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        clientId: { type: string, format: uuid }
+        assetType: { type: string }
+        value: { type: number }
+
+    Goal:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        clientId: { type: string, format: uuid }
+        goalType: { type: string }
+        targetAmount: { type: number }
+
+    Plan:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        clientId: { type: string, format: uuid }
+        status: { type: string }
+        versionNo: { type: integer }
+        approved: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    Recommendation:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        planVersionId: { type: string, format: uuid }
+        recType: { type: string }
+        summary: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    ExecutionInstruction:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        recommendationId: { type: string, format: uuid }
+        status: { type: string, example: SENT }
+        createdAt: { type: string, format: date-time }
+
+    AssessmentRef:
+      type: object
+      properties:
+        assessmentCode: { type: string, example: "onboarding_completeness" }
+        intent: { type: string }
+        aiType: { type: string }
+        humanInTheLoop: { type: boolean }
+
+    ChatThread:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        caseId: { type: string, format: uuid }
+        channel: { type: string, example: CASE_CHAT }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ChatMessage:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        threadId: { type: string, format: uuid }
+        senderKind:
+          type: string
+          enum: [USER, ASSISTANT, SYSTEM]
+        actorRole: { type: string, example: RM }
+        visibility:
+          type: string
+          enum: [ALL, INTERNAL]
+        phaseCode: { type: string, example: PLANNING }
+        assessmentCode: { type: string, example: plan_recommendation }
+        intentCode: { type: string, example: plan_review }
+        body: { type: string }
+        contextSnapshot:
+          type: object
+          additionalProperties: true
+        aiPayload:
+          type: object
+          additionalProperties: true
+        createdAt: { type: string, format: date-time }
+
+    ChatSendRequest:
+      type: object
+      required: [message]
+      properties:
+        threadId: { type: string, format: uuid }
+        phaseCode: { type: string }
+        assessmentCode: { type: string }
+        message: { type: string, example: "Please review my retirement plan" }
+        visibility:
+          type: string
+          enum: [ALL, INTERNAL]
+          default: ALL
+        autoDetectIntent:
+          type: boolean
+          default: true
+        attachmentIds:
+          type: array
+          items: { type: string, format: uuid }
+
+    ChatSendResponse:
+      type: object
+      properties:
+        userMessage: { $ref: "#/components/schemas/ChatMessage" }
+        aiReply: { $ref: "#/components/schemas/ChatMessage" }
+
+    ChatIntentResult:
+      type: object
+      properties:
+        intentCode: { type: string, example: add_asset }
+        phaseCode: { type: string, example: DISCOVERY }
+        assessmentCode: { type: string, example: onboarding_completeness }
+        confidence: { type: number, format: float, example: 0.95 }
+
+    ChatAttachment:
+      type: object
+      properties:
+        caseDocumentId: { type: string, format: uuid }
+        storedDocumentId: { type: string, format: uuid }
+        filename: { type: string }
+        docKind: { type: string, example: ID_CARD }
+        uploadedAt: { type: string, format: date-time }

@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitives
+    function isSignedIn() { return request.auth != null; }
+    // function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    // Relaxed for demo:
+    function isVerified() { return isSignedIn(); }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // Pillar 2: Validation Helpers
+    function isValidClient(data) {
+      return data.keys().hasAll(['clientId', 'name', 'email', 'status', 'rmId'])
+        && data.keys().size() >= 5
+        && data.name is string && data.name.size() <= 100
+        && data.email is string && data.email.size() <= 100
+        && data.status in ['LEAD', 'ONBOARDING', 'ACTIVE', 'INACTIVE']
+        && data.rmId is string;
+    }
+
+    function isValidCase(data) {
+      return data.keys().hasAll(['clientId', 'type', 'status', 'rmId'])
+        && data.clientId is string
+        && data.type in ['INITIALIZED', 'ONBOARDING', 'PLANNING', 'INVESTMENT', 'ADVANCED_SERVICE', 'Investment Allocation', 'Legacy & Succession', 'Tax Optimization', 'Comprehensive Wealth']
+        && data.status is string
+        && data.rmId is string;
+    }
+
+    function isValidPlan(data) {
+      return data.keys().hasAll(['clientId', 'assumptions', 'status'])
+        && data.clientId is string
+        && data.status in ['DRAFT', 'FINALIZED'];
+    }
+
+    function isValidExecution(data) {
+      return data.keys().hasAll(['planId', 'trades', 'status'])
+        && data.planId is string
+        && data.status is string;
+    }
+
+    // Rules for Clients
+    match /clients/{clientId} {
+      allow read: if isVerified();
+      allow create, update: if isVerified() && isValidClient(incoming());
+    }
+
+    // Rules for Cases
+    match /cases/{caseId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && isValidCase(incoming());
+      allow update: if isVerified() && isValidCase(incoming());
+    }
+
+    // Rules for Plans
+    match /plans/{planId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && isValidPlan(incoming());
+      allow update: if isVerified() && isValidPlan(incoming());
+    }
+
+    // Rules for Execution Instructions
+    match /execution_instructions/{instructionId} {
+      allow read: if isVerified();
+      allow create, update: if isVerified() && isValidExecution(incoming());
+    }
+
+    // Rules for Onboarding Registrations
+    match /registrations/{regId} {
+      allow read, create, update: if isVerified();
+    }
+
+    // Rules for Decisions
+    match /decisions/{decisionId} {
+      allow read, create: if isVerified();
+    }
+
+    // Rules for Advice
+    match /advice/{adviceId} {
+      allow read: if isVerified();
+      allow create: if isVerified();
+      allow update: if isVerified(); 
+    }
+  }
+}

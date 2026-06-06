@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  /**
+   * Click affordance: native `<button>` and several form controls use the default arrow cursor
+   * (browser / Tailwind preflight), so interactive areas do not read as clickable.
+   * `cursor-not-allowed` and other utilities still override this in the utilities layer.
+   */
+  button:not(:disabled):not([disabled]),
+  [role="button"]:not(:disabled):not([disabled]),
+  input[type="button"]:not(:disabled):not([disabled]),
+  input[type="submit"]:not(:disabled):not([disabled]),
+  input[type="reset"]:not(:disabled):not([disabled]),
+  input[type="checkbox"]:not(:disabled):not([disabled]),
+  input[type="radio"]:not(:disabled):not([disabled]),
+  input[type="file"]:not(:disabled):not([disabled]),
+  select:not(:disabled):not([disabled]),
+  summary {
+    cursor: pointer;
+  }
+
+  a[href] {
+    cursor: pointer;
+  }
+
+  /**
+   * Form controls: clearer default edge + distinct focused edge (many screens used zinc/slate-200).
+   * Uses !important so Tailwind border-* on components does not wash out the outline.
+   */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="file"]):not(:focus),
+  textarea:not(:focus),
+  select:not(:focus) {
+    border: 1px solid rgb(161 161 170) !important; /* zinc-400 */
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="file"]):focus,
+  textarea:focus,
+  select:focus {
+    border-color: rgb(99 102 241) !important; /* indigo-500 */
+    border-style: solid !important;
+    border-width: 1px !important;
+  }
+
+  .markdown-body {
+    @apply text-slate-700 leading-relaxed;
+  }
+  .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+    @apply text-slate-900 font-bold mt-6 mb-2 tracking-tight;
+  }
+  .markdown-body h1 { @apply text-xl; }
+  .markdown-body h2 { @apply text-lg; }
+  .markdown-body p { @apply mb-4; }
+  .markdown-body ul { @apply list-disc list-inside mb-4 space-y-1; }
+  .markdown-body strong { @apply text-slate-900 font-bold; }
+}

@@ -1,0 +1,1 @@
+"""SmartWealth domain package."""

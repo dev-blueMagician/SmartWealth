@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "Client": {
+      "title": "Client Profiling",
+      "description": "Authoritative client master record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "status": { "type": "string", "enum": ["LEAD", "ONBOARDING", "ACTIVE", "INACTIVE"] },
+        "rmId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "status", "rmId"]
+    },
+    "Case": {
+      "title": "Service Case",
+      "description": "A container for a specific client request or onboarding journey.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "type": { "type": "string", "enum": ["ONBOARDING", "PLANNING", "INVESTMENT", "ADVANCED_SERVICE"] },
+        "status": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "metadata": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Task": {
+      "title": "Workflow Task",
+      "description": "Actionable item within a case.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "caseId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "IN_PROGRESS", "COMPLETED", "FAILED"] },
+        "assigneeId": { "type": "string" },
+        "priority": { "type": "string" },
+        "dueDate": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Goal": {
+      "title": "Financial Goal",
+      "description": "Client-defined objectives.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "title": { "type": "string" },
+        "targetAmount": { "type": "number" },
+        "targetDate": { "type": "string", "format": "date-time" },
+        "type": { "type": "string" }
+      }
+    },
+    "Advice": {
+      "title": "Recommendation Package",
+      "description": "Advice delivered to the client.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "caseId": { "type": "string" },
+        "content": { "type": "string" },
+        "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED", "APPROVED", "REJECTED"] },
+        "deliveredAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/clients/{clientId}": {
+      "schema": "Client",
+      "description": "Client profiles"
+    },
+    "/cases/{caseId}": {
+      "schema": "Case",
+      "description": "Client cases and onboarding journeys"
+    },
+    "/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "System and human tasks"
+    },
+    "/goals/{goalId}": {
+      "schema": "Goal",
+      "description": "Client financial goals"
+    },
+    "/advice/{adviceId}": {
+      "schema": "Advice",
+      "description": "Advice and recommendations"
+    }
+  }
+}

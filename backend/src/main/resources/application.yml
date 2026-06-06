@@ -1,0 +1,70 @@
+server:
+  port: 8090
+  tomcat:
+    # Long-running NDJSON chat stream (catalog assessment + narrate).
+    connection-timeout: 900000
+
+spring:
+  application:
+    name: wealth-backend
+  mvc:
+    async:
+      # Default ~30s causes AsyncRequestTimeoutException during AI-engine work.
+      request-timeout: 900000
+  security:
+    filter:
+      # Exclude ASYNC so JWT/authorization are not re-run after StreamingResponseBody starts (avoids AccessDenied on committed response).
+      dispatcher-types: request, error, forward, include
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 30MB
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=smartwealth
+    username: ducnv3.gfs
+    password: 123123
+    hikari:
+      max-lifetime: 540000
+      idle-timeout: 300000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+logging:
+  level:
+    com.backend.wealth: INFO
+
+wealth:
+  security:
+    jwt-secret: ${WEALTH_JWT_SECRET:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+    jwt-expiration-ms: 86400000
+    bootstrap-admin-username: ${WEALTH_BOOTSTRAP_ADMIN_USERNAME:admin}
+    bootstrap-admin-password: ${WEALTH_BOOTSTRAP_ADMIN_PASSWORD:changeme}
+  ai-engine:
+    base-url: ${WEALTH_AI_ENGINE_BASE_URL:http://localhost:8010}
+    # Same secret as AI-engine INTERNAL_WORKFLOW_EVENT_TOKEN for /internal/chat/turn and workflow hooks.
+    # Default matches AI-engine .env example for local dev; override with WEALTH_AI_ENGINE_INTERNAL_TOKEN in prod.
+    internal-token: ${WEALTH_AI_ENGINE_INTERNAL_TOKEN:secret-test}
+    workflow-create-max-attempts: 4
+    workflow-create-backoff-ms: 400
+  ai-gate:
+    enabled: ${WEALTH_AI_GATE_ENABLED:true}
+  case-chat:
+    upload-directory: ${WEALTH_CASE_CHAT_UPLOAD_DIR:./data/case-chat-uploads}
+    max-file-size-bytes: ${WEALTH_CASE_CHAT_MAX_FILE_BYTES:26214400}
+    # Async timeout for POST .../chat/messages/stream (see WebAsyncConfig).
+    stream-async-timeout-ms: ${WEALTH_CASE_CHAT_STREAM_ASYNC_TIMEOUT_MS:900000}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha

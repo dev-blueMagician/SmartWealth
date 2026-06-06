@@ -1,0 +1,14 @@
+{
+  "name": "Nexus Wealth Management",
+  "description": "An end-to-end wealth management platform featuring AI-assisted onboarding, collaborative financial planning, and a client mobile companion.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "AI-powered financial planning",
+    "Real-time team collaboration",
+    "Secure client onboarding",
+    "Portfolio monitoring & execution"
+  ]
+}

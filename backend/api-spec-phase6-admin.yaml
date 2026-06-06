@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: Wealth Core — Phase 6 Admin Ops
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090
+
+paths:
+  /execution/send:
+    post:
+      tags: [Admin — Execution]
+      operationId: sendExecutionInstruction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionSendRequest'
+      responses:
+        '200':
+          description: Instruction sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionInstructionResponse'
+
+  /execution/results:
+    post:
+      tags: [Admin — Execution]
+      operationId: recordExecutionResults
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionResultRequest'
+      responses:
+        '200':
+          description: Portfolio updated, instruction executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResultResponse'
+
+components:
+  schemas:
+    ExecutionSendRequest:
+      type: object
+      required: [instructionId]
+      properties:
+        instructionId:
+          type: string
+          format: uuid
+    ExecutionResultRequest:
+      type: object
+      required: [instructionId]
+      properties:
+        instructionId:
+          type: string
+          format: uuid
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResultAllocationItem'
+    ResultAllocationItem:
+      type: object
+      required: [assetClass, percentage]
+      properties:
+        assetClass:
+          type: string
+        percentage:
+          type: number
+    ExecutionResultResponse:
+      type: object
+      properties:
+        instructionId:
+          type: string
+          format: uuid
+        instructionStatus:
+          type: string
+        portfolioId:
+          type: string
+          format: uuid
+        message:
+          type: string
+    ExecutionInstructionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        recommendationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time

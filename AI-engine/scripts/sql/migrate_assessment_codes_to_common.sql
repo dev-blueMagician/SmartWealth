@@ -1,0 +1,114 @@
+-- One-time migration: legacy AI-xx assessment / interaction ids → AssessmentCode strings.
+-- Run against an existing DB after pulling app changes. Idempotent only for assessment_code renames.
+
+ALTER TABLE orchestration_request
+    ALTER COLUMN assessment_code TYPE VARCHAR(64),
+    ALTER COLUMN assessment_code SET DEFAULT 'onboarding_completeness';
+
+ALTER TABLE ai_interaction
+    ALTER COLUMN interaction_id TYPE VARCHAR(64);
+
+UPDATE orchestration_request SET assessment_code = 'onboarding_completeness' WHERE assessment_code = 'AI-01';
+UPDATE orchestration_request SET assessment_code = 'client_explain_onboarding' WHERE assessment_code = 'AI-02';
+UPDATE orchestration_request SET assessment_code = 'document_request_draft' WHERE assessment_code = 'AI-03';
+UPDATE orchestration_request SET assessment_code = 'special_situation_detect' WHERE assessment_code = 'AI-04';
+UPDATE orchestration_request SET assessment_code = 'client_summary_structure' WHERE assessment_code = 'AI-05';
+UPDATE orchestration_request SET assessment_code = 'planning_readiness_gap' WHERE assessment_code = 'AI-06';
+UPDATE orchestration_request SET assessment_code = 'assessment_07' WHERE assessment_code = 'AI-07';
+UPDATE orchestration_request SET assessment_code = 'assessment_08' WHERE assessment_code = 'AI-08';
+UPDATE orchestration_request SET assessment_code = 'assessment_09' WHERE assessment_code = 'AI-09';
+UPDATE orchestration_request SET assessment_code = 'assessment_10' WHERE assessment_code = 'AI-10';
+UPDATE orchestration_request SET assessment_code = 'assessment_11' WHERE assessment_code = 'AI-11';
+UPDATE orchestration_request SET assessment_code = 'assessment_12' WHERE assessment_code = 'AI-12';
+UPDATE orchestration_request SET assessment_code = 'assessment_13' WHERE assessment_code = 'AI-13';
+UPDATE orchestration_request SET assessment_code = 'assessment_14' WHERE assessment_code = 'AI-14';
+UPDATE orchestration_request SET assessment_code = 'assessment_15' WHERE assessment_code = 'AI-15';
+UPDATE orchestration_request SET assessment_code = 'assessment_16' WHERE assessment_code = 'AI-16';
+UPDATE orchestration_request SET assessment_code = 'assessment_17' WHERE assessment_code = 'AI-17';
+UPDATE orchestration_request SET assessment_code = 'assessment_18' WHERE assessment_code = 'AI-18';
+UPDATE orchestration_request SET assessment_code = 'assessment_19' WHERE assessment_code = 'AI-19';
+UPDATE orchestration_request SET assessment_code = 'assessment_20' WHERE assessment_code = 'AI-20';
+UPDATE orchestration_request SET assessment_code = 'assessment_21' WHERE assessment_code = 'AI-21';
+UPDATE orchestration_request SET assessment_code = 'assessment_22' WHERE assessment_code = 'AI-22';
+UPDATE orchestration_request SET assessment_code = 'assessment_23' WHERE assessment_code = 'AI-23';
+UPDATE orchestration_request SET assessment_code = 'assessment_24' WHERE assessment_code = 'AI-24';
+UPDATE orchestration_request SET assessment_code = 'assessment_25' WHERE assessment_code = 'AI-25';
+UPDATE orchestration_request SET assessment_code = 'assessment_26' WHERE assessment_code = 'AI-26';
+UPDATE orchestration_request SET assessment_code = 'assessment_27' WHERE assessment_code = 'AI-27';
+UPDATE orchestration_request SET assessment_code = 'assessment_28' WHERE assessment_code = 'AI-28';
+UPDATE orchestration_request SET assessment_code = 'assessment_29' WHERE assessment_code = 'AI-29';
+UPDATE orchestration_request SET assessment_code = 'assessment_30' WHERE assessment_code = 'AI-30';
+UPDATE orchestration_request SET assessment_code = 'assessment_31' WHERE assessment_code = 'AI-31';
+UPDATE orchestration_request SET assessment_code = 'assessment_32' WHERE assessment_code = 'AI-32';
+UPDATE orchestration_request SET assessment_code = 'assessment_33' WHERE assessment_code = 'AI-33';
+UPDATE orchestration_request SET assessment_code = 'assessment_34' WHERE assessment_code = 'AI-34';
+
+UPDATE workflow_ai_trigger SET assessment_code = 'onboarding_completeness' WHERE assessment_code = 'AI-01';
+UPDATE workflow_ai_trigger SET assessment_code = 'client_explain_onboarding' WHERE assessment_code = 'AI-02';
+UPDATE workflow_ai_trigger SET assessment_code = 'document_request_draft' WHERE assessment_code = 'AI-03';
+UPDATE workflow_ai_trigger SET assessment_code = 'special_situation_detect' WHERE assessment_code = 'AI-04';
+UPDATE workflow_ai_trigger SET assessment_code = 'client_summary_structure' WHERE assessment_code = 'AI-05';
+UPDATE workflow_ai_trigger SET assessment_code = 'planning_readiness_gap' WHERE assessment_code = 'AI-06';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_07' WHERE assessment_code = 'AI-07';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_08' WHERE assessment_code = 'AI-08';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_09' WHERE assessment_code = 'AI-09';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_10' WHERE assessment_code = 'AI-10';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_11' WHERE assessment_code = 'AI-11';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_12' WHERE assessment_code = 'AI-12';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_13' WHERE assessment_code = 'AI-13';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_14' WHERE assessment_code = 'AI-14';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_15' WHERE assessment_code = 'AI-15';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_16' WHERE assessment_code = 'AI-16';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_17' WHERE assessment_code = 'AI-17';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_18' WHERE assessment_code = 'AI-18';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_19' WHERE assessment_code = 'AI-19';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_20' WHERE assessment_code = 'AI-20';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_21' WHERE assessment_code = 'AI-21';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_22' WHERE assessment_code = 'AI-22';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_23' WHERE assessment_code = 'AI-23';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_24' WHERE assessment_code = 'AI-24';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_25' WHERE assessment_code = 'AI-25';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_26' WHERE assessment_code = 'AI-26';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_27' WHERE assessment_code = 'AI-27';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_28' WHERE assessment_code = 'AI-28';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_29' WHERE assessment_code = 'AI-29';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_30' WHERE assessment_code = 'AI-30';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_31' WHERE assessment_code = 'AI-31';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_32' WHERE assessment_code = 'AI-32';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_33' WHERE assessment_code = 'AI-33';
+UPDATE workflow_ai_trigger SET assessment_code = 'assessment_34' WHERE assessment_code = 'AI-34';
+
+UPDATE ai_interaction SET interaction_id = 'onboarding_completeness' WHERE interaction_id = 'AI-01';
+UPDATE ai_interaction SET interaction_id = 'client_explain_onboarding' WHERE interaction_id = 'AI-02';
+UPDATE ai_interaction SET interaction_id = 'document_request_draft' WHERE interaction_id = 'AI-03';
+UPDATE ai_interaction SET interaction_id = 'special_situation_detect' WHERE interaction_id = 'AI-04';
+UPDATE ai_interaction SET interaction_id = 'client_summary_structure' WHERE interaction_id = 'AI-05';
+UPDATE ai_interaction SET interaction_id = 'planning_readiness_gap' WHERE interaction_id = 'AI-06';
+UPDATE ai_interaction SET interaction_id = 'assessment_07' WHERE interaction_id = 'AI-07';
+UPDATE ai_interaction SET interaction_id = 'assessment_08' WHERE interaction_id = 'AI-08';
+UPDATE ai_interaction SET interaction_id = 'assessment_09' WHERE interaction_id = 'AI-09';
+UPDATE ai_interaction SET interaction_id = 'assessment_10' WHERE interaction_id = 'AI-10';
+UPDATE ai_interaction SET interaction_id = 'assessment_11' WHERE interaction_id = 'AI-11';
+UPDATE ai_interaction SET interaction_id = 'assessment_12' WHERE interaction_id = 'AI-12';
+UPDATE ai_interaction SET interaction_id = 'assessment_13' WHERE interaction_id = 'AI-13';
+UPDATE ai_interaction SET interaction_id = 'assessment_14' WHERE interaction_id = 'AI-14';
+UPDATE ai_interaction SET interaction_id = 'assessment_15' WHERE interaction_id = 'AI-15';
+UPDATE ai_interaction SET interaction_id = 'assessment_16' WHERE interaction_id = 'AI-16';
+UPDATE ai_interaction SET interaction_id = 'assessment_17' WHERE interaction_id = 'AI-17';
+UPDATE ai_interaction SET interaction_id = 'assessment_18' WHERE interaction_id = 'AI-18';
+UPDATE ai_interaction SET interaction_id = 'assessment_19' WHERE interaction_id = 'AI-19';
+UPDATE ai_interaction SET interaction_id = 'assessment_20' WHERE interaction_id = 'AI-20';
+UPDATE ai_interaction SET interaction_id = 'assessment_21' WHERE interaction_id = 'AI-21';
+UPDATE ai_interaction SET interaction_id = 'assessment_22' WHERE interaction_id = 'AI-22';
+UPDATE ai_interaction SET interaction_id = 'assessment_23' WHERE interaction_id = 'AI-23';
+UPDATE ai_interaction SET interaction_id = 'assessment_24' WHERE interaction_id = 'AI-24';
+UPDATE ai_interaction SET interaction_id = 'assessment_25' WHERE interaction_id = 'AI-25';
+UPDATE ai_interaction SET interaction_id = 'assessment_26' WHERE interaction_id = 'AI-26';
+UPDATE ai_interaction SET interaction_id = 'assessment_27' WHERE interaction_id = 'AI-27';
+UPDATE ai_interaction SET interaction_id = 'assessment_28' WHERE interaction_id = 'AI-28';
+UPDATE ai_interaction SET interaction_id = 'assessment_29' WHERE interaction_id = 'AI-29';
+UPDATE ai_interaction SET interaction_id = 'assessment_30' WHERE interaction_id = 'AI-30';
+UPDATE ai_interaction SET interaction_id = 'assessment_31' WHERE interaction_id = 'AI-31';
+UPDATE ai_interaction SET interaction_id = 'assessment_32' WHERE interaction_id = 'AI-32';
+UPDATE ai_interaction SET interaction_id = 'assessment_33' WHERE interaction_id = 'AI-33';
+UPDATE ai_interaction SET interaction_id = 'assessment_34' WHERE interaction_id = 'AI-34';

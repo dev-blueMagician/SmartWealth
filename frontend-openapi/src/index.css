@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-bg text-slate-600 font-sans antialiased;
+    background-image:
+      radial-gradient(1100px 520px at 0% -20%, rgba(37, 99, 235, 0.05), transparent 55%),
+      radial-gradient(900px 460px at 100% -15%, rgba(16, 185, 129, 0.04), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background-color: rgba(37, 99, 235, 0.15);
+  }
+
+  a {
+    @apply text-accent hover:text-accent-hover transition-colors;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-slate-900 font-semibold tracking-tight scroll-mt-24;
+  }
+
+  h1 {
+    @apply text-3xl mb-2;
+  }
+  h2 {
+    @apply text-xl mt-10 mb-3 pb-2 border-b border-border;
+  }
+  h3 {
+    @apply text-base mt-6 mb-2;
+  }
+
+  p {
+    @apply leading-relaxed text-slate-600;
+  }
+
+  table {
+    @apply w-full text-sm border border-border rounded-lg overflow-hidden bg-bg-panel shadow-card;
+  }
+  th,
+  td {
+    @apply px-3 py-2 text-left border-b border-border align-top;
+  }
+  th {
+    @apply bg-bg-muted text-slate-700 font-medium text-xs uppercase tracking-wider;
+  }
+  tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  code {
+    @apply font-mono text-[0.85em] px-1 py-0.5 rounded bg-bg-subtle text-pink-700 border border-border/70;
+  }
+
+  pre code {
+    @apply bg-transparent p-0 text-sm text-slate-800 border-0;
+  }
+}
+
+@layer components {
+  .doc-card {
+    @apply rounded-xl border border-border bg-bg-panel p-4 shadow-card transition-shadow;
+  }
+  .doc-card:hover {
+    @apply shadow-cardHover;
+  }
+
+  .doc-link {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-slate-600 hover:bg-bg-muted hover:text-slate-900 transition-colors;
+  }
+  .doc-link.active {
+    @apply bg-accent-soft text-accent-hover ring-1 ring-accent/20 font-medium shadow-sm;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider;
+  }
+  .badge-new {
+    @apply bg-emerald-100 text-emerald-800 border border-emerald-200/80;
+  }
+  .badge-beta {
+    @apply bg-amber-100 text-amber-900 border border-amber-200/80;
+  }
+  .badge-deprecated {
+    @apply bg-red-100 text-red-800 border border-red-200/80;
+  }
+
+  .method-badge {
+    @apply inline-flex font-mono text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded mr-2;
+  }
+  .method-get {
+    @apply bg-emerald-100 text-emerald-800;
+  }
+  .method-post {
+    @apply bg-blue-100 text-blue-800;
+  }
+  .method-put {
+    @apply bg-amber-100 text-amber-900;
+  }
+  .method-delete {
+    @apply bg-red-100 text-red-800;
+  }
+}
+
+/* Stoplight Elements — light theme (nền API ref trùng trang) */
+.elements-container {
+  --color-canvas: #ffffff;
+  --color-canvas-pure: #ffffff;
+  --color-canvas-100: #fafafa;
+  --color-canvas-200: #f4f4f5;
+  --color-canvas-300: #e4e4e7;
+  --color-text: #0f172a;
+  --color-primary: #2563eb;
+  font-family: Inter, system-ui, sans-serif;
+}

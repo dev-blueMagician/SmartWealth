@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: Wealth Core — Phase 1 RM Entry
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090
+
+paths:
+  /api/cases:
+    post:
+      tags: [RM — Entry]
+      operationId: createCaseEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseEntryRequest'
+      responses:
+        '201':
+          description: Case lifecycle started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseEntryResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoreErrorResponse'
+
+  /api/invitations:
+    post:
+      tags: [RM — Invitation]
+      operationId: sendInvitation
+      description: Stub — không đổi state core
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationRequest'
+      responses:
+        '202':
+          description: Accepted (stub)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationResponse'
+
+components:
+  schemas:
+    CaseEntryRequest:
+      type: object
+      properties:
+        clientName:
+          type: string
+          description: Optional display name; default nếu bỏ trống
+        rmNote:
+          type: string
+    CaseEntryResponse:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        caseId:
+          type: string
+          format: uuid
+        onboardingTaskId:
+          type: string
+          format: uuid
+        profileCompletionTaskId:
+          type: string
+          format: uuid
+        auditEventId:
+          type: string
+          format: uuid
+        workflowId:
+          type: string
+          description: AI-engine workflow id created before the case was persisted
+    InvitationRequest:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        channel:
+          type: string
+          description: EMAIL, SMS, …
+    InvitationResponse:
+      type: object
+      properties:
+        accepted:
+          type: boolean
+        message:
+          type: string
+    CoreErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string

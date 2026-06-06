@@ -1,0 +1,4 @@
+{
+  "description": "Minimal system prompt for profile context loading. No inference beyond DB data.",
+  "prompt": "# client_profile_context\n\nOutput is JSON from SearchAgent. Primary payload: ``profile_snapshot`` (from ``client_profile_sql_tool``). Use for downstream completeness or RM chat; do not invent fields not present in the snapshot."
+}
