@@ -17,6 +17,8 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import { RequireInternalAuth } from './auth/RequireInternalAuth';
 import { RequireCapability } from './auth/RequireCapability';
 import type { PortalCapabilities } from './auth/portalPermissions';
+import { LocaleProvider, useT, useLocale } from './i18n';
+import type { Dict } from './i18n/dict';
 import { LoginPage } from './pages/Login';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
@@ -79,32 +81,34 @@ async function fetchMobileClientOptions(): Promise<WorkflowCreateClientOption[]>
 
 // --- Components ---
 
+type NavLabelKey = keyof Dict['nav'];
+
 type MenuDef = {
   icon: typeof LayoutDashboard;
-  label: string;
+  labelKey: NavLabelKey;
   path: string;
   /** Hide menu item when this capability is false (aligned with backend SecurityConfig). */
   requires?: keyof PortalCapabilities;
 };
 
 type NavGroupChild = {
-  label: string;
+  labelKey: NavLabelKey;
   path: string;
   requires: keyof PortalCapabilities;
 };
 
 const AI_ENGINE_CHILDREN: NavGroupChild[] = [
-  { label: 'Workflow AI', path: '/internal/ai-engine/workflows', requires: 'canUseStaffDataApis' },
-  { label: 'AI settings', path: '/internal/ai-engine/settings', requires: 'canManageAiEngineCatalog' },
-  { label: 'Case phases', path: '/internal/ai-engine/case-phases', requires: 'canManageAiEngineCatalog' },
-  { label: 'AI interactions', path: '/internal/ai-engine/ai-interactions', requires: 'canManageAiEngineCatalog' },
+  { labelKey: 'workflowAi', path: '/internal/ai-engine/workflows', requires: 'canUseStaffDataApis' },
+  { labelKey: 'aiSettings', path: '/internal/ai-engine/settings', requires: 'canManageAiEngineCatalog' },
+  { labelKey: 'casePhases', path: '/internal/ai-engine/case-phases', requires: 'canManageAiEngineCatalog' },
+  { labelKey: 'aiInteractions', path: '/internal/ai-engine/ai-interactions', requires: 'canManageAiEngineCatalog' },
 ];
 
 /** Business discovery setup (questionnaire catalog, field dictionary, Q→field mappings). */
 const DISCOVERY_SETUP_CHILDREN: NavGroupChild[] = [
-  { label: 'Questions', path: '/internal/discovery/questions', requires: 'canManageDiscoveryMappings' },
-  { label: 'Field dictionary', path: '/internal/discovery/dictionary', requires: 'canManageDiscoveryMappings' },
-  { label: 'Field mappings', path: '/internal/discovery/mappings', requires: 'canManageDiscoveryMappings' },
+  { labelKey: 'questions', path: '/internal/discovery/questions', requires: 'canManageDiscoveryMappings' },
+  { labelKey: 'fieldDictionary', path: '/internal/discovery/dictionary', requires: 'canManageDiscoveryMappings' },
+  { labelKey: 'fieldMappings', path: '/internal/discovery/mappings', requires: 'canManageDiscoveryMappings' },
 ];
 
 function RedirectLegacyWorkflowList() {
@@ -120,6 +124,8 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { auth, logout, portalCaps } = useAuth();
+  const t = useT();
+  const { lang, setLang } = useLocale();
 
   const [aiGroupOpen, setAiGroupOpen] = useState(
     () =>
@@ -143,13 +149,13 @@ const Sidebar = () => {
   }, [location.pathname]);
 
   const allItems: MenuDef[] = [
-        { icon: LayoutDashboard, label: 'Dashboard', path: '/internal', requires: 'canUseStaffDataApis' },
-        { icon: Briefcase, label: 'Cases', path: '/internal/cases', requires: 'canUseStaffDataApis' },
-        { icon: FileText, label: 'Plan templates', path: '/internal/planning/templates', requires: 'canManageAiEngineCatalog' },
-        { icon: TrendingUp, label: 'Investments', path: '/internal/investments', requires: 'canViewInvestments' },
-        { icon: ShieldCheck, label: 'Compliance', path: '/internal/compliance', requires: 'canUseStaffDataApis' },
-        { icon: Users, label: 'Users', path: '/internal/users', requires: 'canManagePortalUsers' },
-        { icon: Settings, label: 'Settings', path: '/internal/settings', requires: 'canUseStaffDataApis' },
+    { icon: LayoutDashboard, labelKey: 'dashboard', path: '/internal', requires: 'canUseStaffDataApis' },
+    { icon: Briefcase, labelKey: 'cases', path: '/internal/cases', requires: 'canUseStaffDataApis' },
+    { icon: FileText, labelKey: 'planTemplates', path: '/internal/planning/templates', requires: 'canManageAiEngineCatalog' },
+    { icon: TrendingUp, labelKey: 'investments', path: '/internal/investments', requires: 'canViewInvestments' },
+    { icon: ShieldCheck, labelKey: 'compliance', path: '/internal/compliance', requires: 'canUseStaffDataApis' },
+    { icon: Users, labelKey: 'users', path: '/internal/users', requires: 'canManagePortalUsers' },
+    { icon: Settings, labelKey: 'settings', path: '/internal/settings', requires: 'canUseStaffDataApis' },
   ];
 
   const menuItems = allItems.filter((item) => !item.requires || portalCaps[item.requires]);
@@ -190,7 +196,7 @@ const Sidebar = () => {
               )}
             >
               <item.icon className={cn("w-5 h-5", active ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
-              {item.label}
+              {t.nav[item.labelKey]}
               {active && <motion.div layoutId="activeNav" className="ml-auto w-1 h-4 bg-indigo-400 rounded-full" />}
             </Link>
           );
@@ -211,7 +217,7 @@ const Sidebar = () => {
               <ClipboardList
                 className={cn('w-5 h-5', discoverySetupActive ? 'text-indigo-400' : 'text-slate-500')}
               />
-              <span className="flex-1">Discovery setup</span>
+              <span className="flex-1">{t.nav.discoverySetup}</span>
               <ChevronDown className={cn('w-4 h-4 transition-transform', discoveryGroupOpen && 'rotate-180')} />
             </button>
             {discoveryGroupOpen ? (
@@ -230,7 +236,7 @@ const Sidebar = () => {
                       )}
                     >
                       <FileText className="w-4 h-4 shrink-0 opacity-80" />
-                      {child.label}
+                      {t.nav[child.labelKey]}
                     </Link>
                   );
                 })}
@@ -250,7 +256,7 @@ const Sidebar = () => {
               )}
             >
               <Cpu className={cn('w-5 h-5', aiSectionActive ? 'text-indigo-400' : 'text-slate-500')} />
-              <span className="flex-1">AI-engine</span>
+              <span className="flex-1">{t.nav.aiEngine}</span>
               <ChevronDown className={cn('w-4 h-4 transition-transform', aiGroupOpen && 'rotate-180')} />
             </button>
             {aiGroupOpen ? (
@@ -269,12 +275,12 @@ const Sidebar = () => {
                         childActive ? 'text-indigo-400 font-medium bg-slate-800/60' : 'text-slate-400 hover:text-white hover:bg-slate-800/40',
                       )}
                     >
-                      {child.label === 'Workflow AI' ? (
+                      {child.labelKey === 'workflowAi' ? (
                         <Zap className="w-4 h-4 shrink-0 opacity-80" />
                       ) : (
                         <Settings className="w-4 h-4 shrink-0 opacity-80" />
                       )}
-                      {child.label}
+                      {t.nav[child.labelKey]}
                     </Link>
                   );
                 })}
@@ -283,7 +289,25 @@ const Sidebar = () => {
           </div>
         ) : null}
       </nav>
-      <div className="p-6 border-t border-slate-800">
+      <div className="p-6 border-t border-slate-800 space-y-3">
+        <div className="flex items-center gap-1" role="group" aria-label={t.lang.label}>
+          {(['en', 'vi'] as const).map((code) => (
+            <button
+              key={code}
+              type="button"
+              onClick={() => setLang(code)}
+              aria-pressed={lang === code}
+              className={cn(
+                'flex-1 px-2 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-colors',
+                lang === code
+                  ? 'bg-indigo-500/20 text-indigo-300'
+                  : 'text-slate-500 hover:text-white hover:bg-slate-800/60',
+              )}
+            >
+              {code === 'en' ? 'EN' : 'VI'}
+            </button>
+          ))}
+        </div>
         <div className="flex items-center gap-3 bg-slate-800/50 p-3 rounded-2xl">
           <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-medium text-xs">
             {initials}
@@ -294,7 +318,7 @@ const Sidebar = () => {
           </div>
           <button
             type="button"
-            title="Sign out"
+            title={t.nav.signOut}
             onClick={() => {
               logout();
               navigate('/login', { replace: true });
@@ -311,6 +335,7 @@ const Sidebar = () => {
 
 const InternalLayout = ({ children }: { children: React.ReactNode }) => {
   const { auth } = useAuth();
+  const t = useT();
   const displayName = auth?.username ?? 'there';
   return (
   <div className="flex h-screen bg-slate-50 font-sans">
@@ -318,15 +343,15 @@ const InternalLayout = ({ children }: { children: React.ReactNode }) => {
     <main className="flex-1 overflow-y-auto overflow-x-hidden p-8">
       <header className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Professional Portal</h1>
-          <p className="text-sm text-slate-500">Welcome back, {displayName}. Here&apos;s what needs your attention.</p>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">{t.header.portalTitle}</h1>
+          <p className="text-sm text-slate-500">{t.header.welcome(displayName)}</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Search clients..." 
+            <input
+              type="text"
+              placeholder={t.header.searchClients}
               className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-64 transition-all"
             />
           </div>
@@ -334,9 +359,6 @@ const InternalLayout = ({ children }: { children: React.ReactNode }) => {
             <Bell className="w-5 h-5" />
             <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
           </button>
-          <Link to="/mobile" className="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-all flex items-center gap-2">
-            Switch to Client View <ChevronRight className="w-4 h-4" />
-          </Link>
         </div>
       </header>
       <AnimatePresence mode="wait">
@@ -405,16 +427,36 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => (
           <span className="text-[10px] font-bold uppercase tracking-wider">Chat</span>
         </Link>
       </nav>
-      
-      {/* Platform Switcher for Demo */}
-      <Link to="/internal" className="absolute top-12 left-1/2 -translate-x-1/2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white z-50 border border-white/20 hover:bg-white/30 transition-all uppercase tracking-widest leading-none">
-        Internal View
-      </Link>
     </div>
   </div>
 );
 
 // --- Sub-Pages (Minimal implementation for preview) ---
+
+/**
+ * Home-page quick actions, gated by role-derived capabilities.
+ * Same capability source as the sidebar + route guards, so a user
+ * only ever sees actions their role can actually perform on the backend.
+ */
+type QuickAction = {
+  requires: keyof PortalCapabilities;
+  to: string;
+  icon: typeof LayoutDashboard;
+  titleKey: keyof Dict['dashboard'];
+  descKey: keyof Dict['dashboard'];
+  color: string;
+  bg: string;
+};
+
+const QUICK_ACTIONS: QuickAction[] = [
+  { requires: 'canCreateCase', to: '/internal/cases/new', icon: Plus, titleKey: 'qaCreateCase', descKey: 'qaCreateCaseDesc', color: 'text-blue-600', bg: 'bg-blue-50' },
+  { requires: 'canUsePlanningWorkspace', to: '/internal/cases', icon: FileText, titleKey: 'qaPlanning', descKey: 'qaPlanningDesc', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  { requires: 'canViewInvestments', to: '/internal/investments', icon: TrendingUp, titleKey: 'qaInvestments', descKey: 'qaInvestmentsDesc', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  { requires: 'canCreateExecutionInstruction', to: '/internal/cases', icon: Zap, titleKey: 'qaExecution', descKey: 'qaExecutionDesc', color: 'text-amber-600', bg: 'bg-amber-50' },
+  { requires: 'canManageDiscoveryMappings', to: '/internal/discovery/questions', icon: ClipboardList, titleKey: 'qaDiscovery', descKey: 'qaDiscoveryDesc', color: 'text-violet-600', bg: 'bg-violet-50' },
+  { requires: 'canManageAiEngineCatalog', to: '/internal/ai-engine/settings', icon: Cpu, titleKey: 'qaAiEngine', descKey: 'qaAiEngineDesc', color: 'text-cyan-600', bg: 'bg-cyan-50' },
+  { requires: 'canManagePortalUsers', to: '/internal/users', icon: Users, titleKey: 'qaUsers', descKey: 'qaUsersDesc', color: 'text-rose-600', bg: 'bg-rose-50' },
+];
 
 const InternalDashboard = () => (
   <InternalDashboardContent />
@@ -422,7 +464,9 @@ const InternalDashboard = () => (
 
 const InternalDashboardContent = () => {
   const { portalCaps } = useAuth();
+  const t = useT();
   const canCreateCase = portalCaps.canCreateCase;
+  const visibleQuickActions = QUICK_ACTIONS.filter((a) => portalCaps[a.requires]);
   const [cases, setCases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -450,10 +494,10 @@ const InternalDashboardContent = () => {
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'Active Cases', value: String(cases.length), trend: 'Live from backend', icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Pending Discovery', value: String(pendingDiscovery), trend: 'Need readiness checks', icon: Search, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Planning Ready', value: String(readyForPlanning), trend: 'Case phase PLANNING + status READY', icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-          { label: 'Data Source', value: loading ? 'Loading' : 'API', trend: 'No sample dataset', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: t.dashboard.activeCases, value: String(cases.length), trend: 'Live from backend', icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: t.dashboard.pendingDiscovery, value: String(pendingDiscovery), trend: 'Need readiness checks', icon: Search, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: t.dashboard.planningReady, value: String(readyForPlanning), trend: 'Case phase PLANNING + status READY', icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+          { label: t.dashboard.dataSource, value: loading ? t.dashboard.loadingLabel : 'API', trend: 'No sample dataset', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -469,21 +513,48 @@ const InternalDashboardContent = () => {
               <span className="text-[10px] font-bold text-zinc-400 bg-zinc-50 px-2 py-1 rounded-md uppercase tracking-wider">{stat.trend}</span>
             </div>
             <div>
-              <p className="font-serif italic text-sm text-zinc-500 mb-1">Total {stat.label}</p>
+              <p className="font-serif italic text-sm text-zinc-500 mb-1">{stat.label}</p>
               <p className="text-3xl font-mono font-bold text-zinc-900">{stat.value}</p>
             </div>
           </motion.div>
         ))}
       </div>
 
+      {visibleQuickActions.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-baseline justify-between px-1">
+            <h3 className="font-serif italic text-lg text-zinc-900">{t.dashboard.quickActions}</h3>
+            <span className="text-[11px] font-medium text-zinc-400">{t.dashboard.quickActionsHint}</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visibleQuickActions.map((action) => (
+              <Link
+                key={action.titleKey}
+                to={action.to}
+                className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm hover:shadow-md hover:border-zinc-300 transition-all flex items-start gap-4 group"
+              >
+                <div className={cn('p-3 rounded-xl shrink-0', action.bg)}>
+                  <action.icon className={cn('w-5 h-5', action.color)} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-zinc-900 group-hover:text-blue-600 transition-colors">{t.dashboard[action.titleKey]}</p>
+                  <p className="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">{t.dashboard[action.descKey]}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:translate-x-1 transition-transform ml-auto shrink-0 self-center" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <section className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between">
-              <h3 className="font-serif italic text-lg text-zinc-900">Active Service Cases</h3>
+              <h3 className="font-serif italic text-lg text-zinc-900">{t.dashboard.activeServiceCases}</h3>
               {canCreateCase && (
               <Link to="/internal/cases/new" className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-xs font-bold hover:bg-zinc-800 transition-all flex items-center gap-2">
-                <Plus className="w-4 h-4" /> Create Case
+                <Plus className="w-4 h-4" /> {t.dashboard.createCase}
               </Link>
               )}
             </div>
@@ -494,8 +565,8 @@ const InternalDashboardContent = () => {
                 <span>Source</span>
                 <span className="text-right">Created</span>
               </div>
-              {loading && <div className="px-6 py-8 text-sm text-zinc-500">Loading cases...</div>}
-              {!loading && cases.length === 0 && <div className="px-6 py-8 text-sm text-zinc-500">No cases found from backend.</div>}
+              {loading && <div className="px-6 py-8 text-sm text-zinc-500">{t.dashboard.loadingCases}</div>}
+              {!loading && cases.length === 0 && <div className="px-6 py-8 text-sm text-zinc-500">{t.dashboard.noCases}</div>}
               {cases.slice(0, 8).map((item) => (
                 <Link
                   key={item.id}
@@ -898,6 +969,7 @@ const MobileRiskPage = () => {
 export default function App() {
   return (
     <AuthProvider>
+    <LocaleProvider>
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -978,24 +1050,10 @@ export default function App() {
           </MobileLayout>
         } />
 
-        <Route path="/" element={<div className="min-h-screen flex items-center justify-center bg-slate-950 text-white flex-col gap-6">
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Nexus Wealth Management</h1>
-            <p className="text-slate-400">Select Interface to Preview</p>
-          </div>
-          <div className="flex gap-4">
-            <Link
-              to="/login"
-              state={{ from: { pathname: '/internal' } }}
-              className="px-8 py-3 bg-indigo-600 rounded-2xl font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20"
-            >
-              Professional Portal
-            </Link>
-            <Link to="/mobile" className="px-8 py-3 bg-white text-slate-950 rounded-2xl font-bold hover:bg-slate-100 transition-all">Client Companion</Link>
-          </div>
-        </div>} />
+        <Route path="/" element={<Navigate to="/internal" replace />} />
       </Routes>
     </Router>
+    </LocaleProvider>
     </AuthProvider>
   );
 }
