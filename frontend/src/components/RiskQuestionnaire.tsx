@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, Shield, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { ChevronRight, Shield } from 'lucide-react';
+import { useT } from '../i18n';
 
 interface Question {
   id: number;
@@ -9,39 +9,40 @@ interface Question {
   options: { label: string; value: number }[];
 }
 
-const questions: Question[] = [
-  {
-    id: 1,
-    text: "What is your main investment objective?",
-    options: [
-      { label: "Preserve Capital", value: 1 },
-      { label: "Moderate Growth", value: 3 },
-      { label: "Aggressive Growth", value: 5 },
-    ]
-  },
-  {
-    id: 2,
-    text: "How would you react to a 20% drop in your portfolio?",
-    options: [
-      { label: "Sell everything immediately", value: 1 },
-      { label: "Do nothing, stay the course", value: 3 },
-      { label: "Invest more to take advantage", value: 5 },
-    ]
-  },
-  {
-    id: 3,
-    text: "What is your investment time horizon?",
-    options: [
-      { label: "Less than 3 years", value: 1 },
-      { label: "3 to 10 years", value: 3 },
-      { label: "More than 10 years", value: 5 },
-    ]
-  }
-];
-
 export const RiskQuestionnaire = ({ onComplete }: { onComplete: (score: number) => void }) => {
+  const t = useT();
   const [step, setStep] = useState(0);
   const [scores, setScores] = useState<number[]>([]);
+
+  const questions: Question[] = [
+    {
+      id: 1,
+      text: t.riskQuiz.q1,
+      options: [
+        { label: t.riskQuiz.q1o1, value: 1 },
+        { label: t.riskQuiz.q1o2, value: 3 },
+        { label: t.riskQuiz.q1o3, value: 5 },
+      ],
+    },
+    {
+      id: 2,
+      text: t.riskQuiz.q2,
+      options: [
+        { label: t.riskQuiz.q2o1, value: 1 },
+        { label: t.riskQuiz.q2o2, value: 3 },
+        { label: t.riskQuiz.q2o3, value: 5 },
+      ],
+    },
+    {
+      id: 3,
+      text: t.riskQuiz.q3,
+      options: [
+        { label: t.riskQuiz.q3o1, value: 1 },
+        { label: t.riskQuiz.q3o2, value: 3 },
+        { label: t.riskQuiz.q3o3, value: 5 },
+      ],
+    },
+  ];
 
   const handleSelect = (value: number) => {
     const newScores = [...scores, value];
@@ -60,8 +61,12 @@ export const RiskQuestionnaire = ({ onComplete }: { onComplete: (score: number) 
     <div className="space-y-8 py-2">
       <div className="space-y-4">
         <div className="flex justify-between items-end">
-          <h2 className="text-2xl font-bold text-slate-900 leading-tight">Risk & Suitability</h2>
-          <span className="text-xs font-bold text-slate-400">Step {step + 1} of {questions.length}</span>
+          <h2 className="text-2xl font-bold text-slate-900 leading-tight">{t.riskQuiz.title}</h2>
+          <span className="text-xs font-bold text-slate-400">
+            {t.riskQuiz.stepOf
+              .replace('{current}', String(step + 1))
+              .replace('{total}', String(questions.length))}
+          </span>
         </div>
         <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
            <motion.div 
@@ -99,7 +104,7 @@ export const RiskQuestionnaire = ({ onComplete }: { onComplete: (score: number) 
       <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-3">
          <Shield className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
          <p className="text-xs text-amber-800 leading-relaxed">
-           Your profile determines the range of investment options and strategies we can recommend to ensure your financial security.
+           {t.riskQuiz.footer}
          </p>
       </div>
     </div>

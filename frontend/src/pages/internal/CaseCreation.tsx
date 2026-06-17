@@ -6,10 +6,12 @@ import { wealthApi } from '../../services/wealthApi';
 import { cn } from '../../lib/utils';
 import { toApiError, type ApiError } from '../../services/apiError';
 import { ErrorPopup } from '../../components/ErrorPopup';
+import { useT } from '../../i18n';
 
 export const CaseCreationPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
+  const t = useT();
   const [formData, setFormData] = useState({
     clientName: '',
     type: 'Investment Allocation',
@@ -38,13 +40,13 @@ export const CaseCreationPage = () => {
     <div className="max-w-4xl mx-auto space-y-8">
       <ErrorPopup error={error} onClose={() => setError(null)} />
       <Link to="/internal/cases" className="inline-flex items-center gap-2 text-zinc-400 hover:text-zinc-900 transition-colors text-xs font-bold uppercase tracking-widest">
-         <ChevronLeft className="w-4 h-4" /> Back to Portfolio
+         <ChevronLeft className="w-4 h-4" /> {t.caseCreation.backToPortfolio}
       </Link>
 
       <div className="flex justify-between items-end">
         <div>
-           <h1 className="text-3xl font-serif italic text-zinc-900">Initialize Service Case</h1>
-           <p className="text-zinc-500 text-sm mt-1">Configure parameters for a new financial advisory lifecycle.</p>
+           <h1 className="text-3xl font-serif italic text-zinc-900">{t.caseCreation.title}</h1>
+           <p className="text-zinc-500 text-sm mt-1">{t.caseCreation.subtitle}</p>
         </div>
       </div>
 
@@ -53,54 +55,59 @@ export const CaseCreationPage = () => {
           <div className="bg-white rounded-3xl border border-zinc-200 p-8 shadow-sm space-y-6">
              <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Client Name</label>
+                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.caseCreation.clientName}</label>
                    <input 
                      value={formData.clientName}
                      onChange={e => setFormData({...formData, clientName: e.target.value})}
                      className="w-full px-5 py-3 bg-white border border-zinc-200 rounded-xl text-sm text-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/10"
-                     placeholder="Enter client full name"
+                     placeholder={t.caseCreation.clientNamePlaceholder}
                    />
                 </div>
                 <div className="space-y-2">
-                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Case Type</label>
+                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.caseCreation.caseType}</label>
                    <select 
                      value={formData.type}
                      onChange={e => setFormData({...formData, type: e.target.value})}
                      className="w-full px-5 py-3 bg-white border border-zinc-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/10 transition-all appearance-none"
                    >
-                     <option>Investment Allocation</option>
-                     <option>Legacy & Succession</option>
-                     <option>Tax Optimization</option>
-                     <option>Comprehensive Wealth</option>
+                     <option value="Investment Allocation">{t.caseCreation.typeInvestment}</option>
+                     <option value="Legacy & Succession">{t.caseCreation.typeLegacy}</option>
+                     <option value="Tax Optimization">{t.caseCreation.typeTax}</option>
+                     <option value="Comprehensive Wealth">{t.caseCreation.typeComprehensive}</option>
                    </select>
                 </div>
              </div>
 
              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Urgency Level</label>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.caseCreation.urgencyLevel}</label>
                 <div className="flex gap-4">
-                   {['Low', 'Medium', 'High', 'Critical'].map(level => (
+                   {([
+                     { value: 'Low', label: t.caseCreation.urgencyLow },
+                     { value: 'Medium', label: t.caseCreation.urgencyMedium },
+                     { value: 'High', label: t.caseCreation.urgencyHigh },
+                     { value: 'Critical', label: t.caseCreation.urgencyCritical },
+                   ]).map(({ value, label }) => (
                      <button
-                       key={level}
+                       key={value}
                        type="button"
-                       onClick={() => setFormData({...formData, urgency: level})}
+                       onClick={() => setFormData({...formData, urgency: value})}
                        className={cn(
                          "flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl border transition-all",
-                         formData.urgency === level 
-                          ? "bg-zinc-900 text-white border-zinc-900 shadow-lg shadow-zinc-900/10" 
+                         formData.urgency === value
+                          ? "bg-zinc-900 text-white border-zinc-900 shadow-lg shadow-zinc-900/10"
                           : "bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300"
                        )}
                      >
-                       {level}
+                       {label}
                      </button>
                    ))}
                 </div>
              </div>
 
              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Private RM Notes (Internal)</label>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.caseCreation.rmNotes}</label>
                 <textarea 
-                  placeholder="Capture specific context, sensitivity, or manual orchestration requirements..."
+                  placeholder={t.caseCreation.rmNotesPlaceholder}
                   className="w-full px-5 py-4 bg-white border border-zinc-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/10 transition-all h-32 resize-none"
                   value={formData.rmNotes}
                   onChange={e => setFormData({...formData, rmNotes: e.target.value})}
@@ -109,7 +116,7 @@ export const CaseCreationPage = () => {
           </div>
 
           <div className="flex justify-end gap-4">
-             <button type="button" onClick={() => navigate(-1)} className="px-8 py-3 text-sm font-bold text-zinc-500 hover:text-zinc-900 transition-colors">Discard</button>
+             <button type="button" onClick={() => navigate(-1)} className="px-8 py-3 text-sm font-bold text-zinc-500 hover:text-zinc-900 transition-colors">{t.caseCreation.discard}</button>
              <button 
                type="submit" 
                disabled={loading || !formData.clientName.trim()}
@@ -118,7 +125,7 @@ export const CaseCreationPage = () => {
                  loading || !formData.clientName.trim() ? "opacity-50 cursor-not-allowed" : "hover:bg-zinc-800"
                )}
              >
-                {loading ? "INITIALIZING..." : "CONFIRM & INITIALIZE"}
+                {loading ? t.caseCreation.initializing : t.caseCreation.confirm}
                 <Zap className={cn("w-4 h-4 text-blue-400", loading && "animate-pulse")} />
              </button>
           </div>

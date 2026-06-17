@@ -10,6 +10,7 @@ import { usesOptionsList, normalizeAnswerType } from '../../../lib/discoveryUtil
 import { toApiError, type ApiError } from '../../../services/apiError';
 import { ErrorPopup } from '../../../components/ErrorPopup';
 import { SuccessToast } from '../../../components/SuccessToast';
+import { useT } from '../../../i18n';
 
 const ANSWER_TYPES = [
   { value: 'text', label: 'Text' },
@@ -20,6 +21,7 @@ const ANSWER_TYPES = [
 ] as const;
 
 export function DiscoveryQuestionsPage() {
+  const t = useT();
   const [rows, setRows] = useState<DiscoveryQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -170,10 +172,10 @@ export function DiscoveryQuestionsPage() {
           questionId: questionId.trim(),
           ...payload,
         });
-        setSuccessMessage(`Created ${questionId.trim()}.`);
+        setSuccessMessage(t.discoveryQuestions.createdToast.replace('{id}', questionId.trim()));
       } else if (editingId) {
         await discoveryApi.updateQuestion(editingId, payload);
-        setSuccessMessage(`Updated ${editingId}.`);
+        setSuccessMessage(t.discoveryQuestions.updatedToast.replace('{id}', editingId));
       }
       closeModal();
       await loadQuestions();
@@ -185,10 +187,10 @@ export function DiscoveryQuestionsPage() {
   };
 
   const handleDelete = async (id: string, fromModal = false) => {
-    if (!window.confirm(`Delete question ${id}? Related options/answers may block deletion.`)) return;
+    if (!window.confirm(t.discoveryQuestions.deleteConfirm.replace('{id}', id))) return;
     try {
       await discoveryApi.deleteQuestion(id);
-      setSuccessMessage(`Deleted ${id}.`);
+      setSuccessMessage(t.discoveryQuestions.deletedToast.replace('{id}', id));
       if (fromModal || editingId === id) closeModal();
       await loadQuestions();
     } catch (err) {
@@ -200,7 +202,7 @@ export function DiscoveryQuestionsPage() {
     const qid = editingId;
     if (!qid) return;
     if (!newOptionValue.trim() && !newOptionLabel.trim()) {
-      setError(toApiError(new Error('Enter option_value or option_label.')));
+      setError(toApiError(new Error(t.discoveryQuestions.errEnterOption)));
       return;
     }
     try {
@@ -210,7 +212,7 @@ export function DiscoveryQuestionsPage() {
       });
       setNewOptionValue('');
       setNewOptionLabel('');
-      setSuccessMessage('Option added.');
+      setSuccessMessage(t.discoveryQuestions.optionAdded);
       await loadOptions(qid);
     } catch (err) {
       setError(toApiError(err));
@@ -219,7 +221,7 @@ export function DiscoveryQuestionsPage() {
 
   const handleImportCsv = async () => {
     if (!importFile) {
-      setError(toApiError(new Error('Choose a CSV file first.')));
+      setError(toApiError(new Error(t.discoveryQuestions.errChooseCsv)));
       return;
     }
     setImporting(true);
@@ -228,7 +230,9 @@ export function DiscoveryQuestionsPage() {
       const result = await discoveryApi.importQuestionsCsv(importFile, updateExistingOnImport);
       setImportResult(result);
       setSuccessMessage(
-        `Import done: ${result.questionsCreated} created, ${result.questionsUpdated} updated.`,
+        t.discoveryQuestions.importDoneToast
+          .replace('{created}', String(result.questionsCreated))
+          .replace('{updated}', String(result.questionsUpdated)),
       );
       setImportFile(null);
       await loadQuestions();
@@ -254,7 +258,7 @@ export function DiscoveryQuestionsPage() {
         });
       }
       setBulkOptions('');
-      setSuccessMessage(`Added ${parts.length} option(s).`);
+      setSuccessMessage(t.discoveryQuestions.bulkAddedToast.replace('{count}', String(parts.length)));
       await loadOptions(qid);
     } catch (err) {
       setError(toApiError(err));
@@ -273,11 +277,10 @@ export function DiscoveryQuestionsPage() {
         <div>
           <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
             <ClipboardList className="w-6 h-6 text-indigo-600" />
-            Discovery questions
+            {t.discoveryQuestions.title}
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Full list view — <span className="font-bold">New question</span> or row click opens a popup to
-            add or edit.
+            {t.discoveryQuestions.subtitle}
           </p>
         </div>
         <button
@@ -286,15 +289,15 @@ export function DiscoveryQuestionsPage() {
           className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-500 flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          New question
+          {t.discoveryQuestions.newQuestion}
         </button>
       </header>
 
       <details className="shrink-0 bg-white rounded-2xl border border-slate-200 shadow-sm">
         <summary className="cursor-pointer list-none px-4 py-3 flex items-center gap-2 text-sm font-bold text-slate-800">
           <Upload className="w-4 h-4 text-indigo-600" />
-          Import from CSV
-          <span className="text-xs font-normal text-slate-500 ml-1">(click to expand)</span>
+          {t.discoveryQuestions.importCsv}
+          <span className="text-xs font-normal text-slate-500 ml-1">{t.discoveryQuestions.clickToExpand}</span>
         </summary>
         <div className="px-4 pb-4 pt-0 space-y-3 border-t border-slate-100">
           <div className="flex flex-wrap items-center gap-3">
@@ -314,7 +317,7 @@ export function DiscoveryQuestionsPage() {
                 onChange={(e) => setUpdateExistingOnImport(e.target.checked)}
                 className="rounded border-slate-300 text-indigo-600"
               />
-              Update existing (by QID)
+              {t.discoveryQuestions.updateExistingByQid}
             </label>
             <button
               type="button"
@@ -322,14 +325,17 @@ export function DiscoveryQuestionsPage() {
               onClick={() => void handleImportCsv()}
               className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold disabled:opacity-50"
             >
-              {importing ? 'Importing…' : 'Import CSV'}
+              {importing ? t.discoveryQuestions.importing : t.discoveryQuestions.importCsv}
             </button>
           </div>
           {importResult ? (
             <p className="text-xs text-slate-700">
-              Rows {importResult.rowsRead} · Created {importResult.questionsCreated} · Updated{' '}
-              {importResult.questionsUpdated} · Options {importResult.optionsCreated} · Mappings{' '}
-              {importResult.mappingsCreated}
+              {t.discoveryQuestions.importResult
+                .replace('{read}', String(importResult.rowsRead))
+                .replace('{created}', String(importResult.questionsCreated))
+                .replace('{updated}', String(importResult.questionsUpdated))
+                .replace('{options}', String(importResult.optionsCreated))
+                .replace('{mappings}', String(importResult.mappingsCreated))}
             </p>
           ) : null}
         </div>
@@ -341,7 +347,7 @@ export function DiscoveryQuestionsPage() {
           <input
             value={searchQid}
             onChange={(e) => setSearchQid(e.target.value)}
-            placeholder="Search QID or text"
+            placeholder={t.discoveryQuestions.searchPlaceholder}
             className="px-3 py-2 border border-slate-200 rounded-lg text-sm flex-1 min-w-[140px]"
           />
           <select
@@ -349,7 +355,7 @@ export function DiscoveryQuestionsPage() {
             onChange={(e) => setModuleFilter(e.target.value)}
             className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white min-w-[120px]"
           >
-            <option value="">All modules</option>
+            <option value="">{t.discoveryQuestions.allModules}</option>
             {uniqueModules.map((m) => (
               <option key={m} value={m}>
                 {m}
@@ -361,7 +367,7 @@ export function DiscoveryQuestionsPage() {
             onChange={(e) => setSectionFilter(e.target.value)}
             className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white min-w-[120px]"
           >
-            <option value="">All sections</option>
+            <option value="">{t.discoveryQuestions.allSections}</option>
             {uniqueSections.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -373,26 +379,26 @@ export function DiscoveryQuestionsPage() {
             onClick={() => void loadQuestions()}
             className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 hover:bg-slate-50"
           >
-            Reload
+            {t.discoveryQuestions.reload}
           </button>
-          <span className="text-xs text-slate-500 ml-auto">{filteredRows.length} shown</span>
+          <span className="text-xs text-slate-500 ml-auto">{t.discoveryQuestions.shownCount.replace('{count}', String(filteredRows.length))}</span>
         </div>
 
         {loading ? (
-          <p className="p-6 text-sm text-slate-500">Loading…</p>
+          <p className="p-6 text-sm text-slate-500">{t.discoveryQuestions.loading}</p>
         ) : filteredRows.length === 0 ? (
-          <p className="p-6 text-sm text-slate-500">No questions.</p>
+          <p className="p-6 text-sm text-slate-500">{t.discoveryQuestions.noQuestions}</p>
         ) : (
           <div className="flex-1 min-h-[420px] overflow-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-[10px] uppercase text-slate-500 sticky top-0 z-10">
                 <tr>
                   <th className="text-left px-4 py-3 font-bold">QID</th>
-                  <th className="text-left px-4 py-3 font-bold">Module · Section</th>
-                  <th className="text-left px-4 py-3 font-bold">Question</th>
-                  <th className="text-left px-4 py-3 font-bold">Type</th>
-                  <th className="text-left px-4 py-3 font-bold">Flags</th>
-                  <th className="text-right px-4 py-3 font-bold w-24">Actions</th>
+                  <th className="text-left px-4 py-3 font-bold">{t.discoveryQuestions.colModuleSection}</th>
+                  <th className="text-left px-4 py-3 font-bold">{t.discoveryQuestions.colQuestion}</th>
+                  <th className="text-left px-4 py-3 font-bold">{t.discoveryQuestions.colType}</th>
+                  <th className="text-left px-4 py-3 font-bold">{t.discoveryQuestions.colFlags}</th>
+                  <th className="text-right px-4 py-3 font-bold w-24">{t.discoveryQuestions.colActions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -420,7 +426,7 @@ export function DiscoveryQuestionsPage() {
                       <div className="flex justify-end gap-1">
                         <button
                           type="button"
-                          title="Edit"
+                          title={t.discoveryQuestions.edit}
                           onClick={() => startEdit(r)}
                           className="p-1.5 rounded-lg border border-slate-200 hover:bg-white text-slate-600"
                         >
@@ -428,7 +434,7 @@ export function DiscoveryQuestionsPage() {
                         </button>
                         <button
                           type="button"
-                          title="Delete"
+                          title={t.discoveryQuestions.delete}
                           onClick={() => void handleDelete(r.questionId)}
                           className="p-1.5 rounded-lg border border-rose-200 hover:bg-rose-50 text-rose-600"
                         >
@@ -461,7 +467,7 @@ export function DiscoveryQuestionsPage() {
             <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-slate-100 shrink-0">
               <div>
                 <h2 id="question-modal-title" className="text-lg font-bold text-slate-900">
-                  {isCreateMode ? 'New question' : 'Edit question'}
+                  {isCreateMode ? t.discoveryQuestions.newQuestionTitle : t.discoveryQuestions.editQuestionTitle}
                 </h2>
                 {!isCreateMode && editingId ? (
                   <p className="text-xs font-mono text-slate-500 mt-0.5">{editingId}</p>
@@ -472,7 +478,7 @@ export function DiscoveryQuestionsPage() {
                 onClick={closeModal}
                 disabled={saving}
                 className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-50"
-                aria-label="Close"
+                aria-label={t.common.close}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -543,7 +549,7 @@ export function DiscoveryQuestionsPage() {
                       onChange={(e) => setRepeatable(e.target.checked)}
                       className="rounded border-slate-300 text-indigo-600"
                     />
-                    Repeatable
+                    {t.discoveryQuestions.repeatable}
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -552,7 +558,7 @@ export function DiscoveryQuestionsPage() {
                       onChange={(e) => setRequiredFlag(e.target.checked)}
                       className="rounded border-slate-300 text-indigo-600"
                     />
-                    Required
+                    {t.discoveryQuestions.required}
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -561,17 +567,17 @@ export function DiscoveryQuestionsPage() {
                       onChange={(e) => setConditionalFlag(e.target.checked)}
                       className="rounded border-slate-300 text-indigo-600"
                     />
-                    Conditional
+                    {t.discoveryQuestions.conditional}
                   </label>
                 </div>
 
                 {showOptionsPanel ? (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
-                    <p className={labelClass}>Answer options</p>
+                    <p className={labelClass}>{t.discoveryQuestions.answerOptions}</p>
                     {optionsLoading ? (
-                      <p className="text-xs text-slate-500">Loading…</p>
+                      <p className="text-xs text-slate-500">{t.discoveryQuestions.loading}</p>
                     ) : options.length === 0 ? (
-                      <p className="text-xs text-slate-500">No options yet.</p>
+                      <p className="text-xs text-slate-500">{t.discoveryQuestions.noOptions}</p>
                     ) : (
                       <ul className="text-xs space-y-1 max-h-24 overflow-y-auto font-mono text-slate-700">
                         {options.map((o) => (
@@ -598,7 +604,7 @@ export function DiscoveryQuestionsPage() {
                       onClick={() => void handleAddOption()}
                       className="w-full px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold"
                     >
-                      Add option
+                      {t.discoveryQuestions.addOption}
                     </button>
                     <textarea
                       value={bulkOptions}
@@ -612,12 +618,12 @@ export function DiscoveryQuestionsPage() {
                       onClick={() => void handleBulkAddOptions()}
                       className="w-full px-3 py-1.5 border border-indigo-200 text-indigo-700 rounded-lg text-xs font-bold"
                     >
-                      Add bulk options
+                      {t.discoveryQuestions.addBulkOptions}
                     </button>
                   </div>
                 ) : editingId ? (
                   <p className="text-xs text-slate-500">
-                    Save the question first, then edit again to manage options (choice types only).
+                    {t.discoveryQuestions.saveFirstHint}
                   </p>
                 ) : null}
               </div>
@@ -628,7 +634,7 @@ export function DiscoveryQuestionsPage() {
                   disabled={saving}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold disabled:opacity-50"
                 >
-                  {saving ? 'Saving…' : isCreateMode ? 'Create question' : 'Save changes'}
+                  {saving ? t.discoveryQuestions.saving : isCreateMode ? t.discoveryQuestions.createQuestion : t.discoveryQuestions.saveChanges}
                 </button>
                 <button
                   type="button"
@@ -636,7 +642,7 @@ export function DiscoveryQuestionsPage() {
                   disabled={saving}
                   className="px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold bg-white disabled:opacity-50"
                 >
-                  Cancel
+                  {t.discoveryQuestions.cancel}
                 </button>
                 {editingId && !isCreateMode ? (
                   <button
@@ -646,7 +652,7 @@ export function DiscoveryQuestionsPage() {
                     className="ml-auto px-4 py-2 border border-rose-200 text-rose-700 rounded-xl text-sm font-bold hover:bg-rose-50 flex items-center gap-1"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete
+                    {t.discoveryQuestions.delete}
                   </button>
                 ) : null}
               </div>

@@ -40,6 +40,7 @@ import { toApiError, type ApiError } from '../../services/apiError';
 import { ErrorPopup } from '../../components/ErrorPopup';
 import { SuccessToast } from '../../components/SuccessToast';
 import { CaseChatRunStepsCompact } from '../../components/CaseChatRunSteps';
+import { useT } from '../../i18n';
 import {
   DEV_CHAT_PROGRESS_SCENARIO,
   type ChatRunStepRow,
@@ -62,6 +63,7 @@ function chatAttachmentsFromSnapshot(snap: CaseChatMessageRecord['contextSnapsho
 export const CaseDetailPage = () => {
   const { portalCaps } = useAuth();
   const { caseId } = useParams();
+  const t = useT();
   const [data, setData] = useState<any>(null);
   const [tasks, setTasks] = useState<Array<{ id: string; taskType: string; status: string; updatedAt?: string }>>([]);
   const [loading, setLoading] = useState(true);
@@ -338,7 +340,7 @@ export const CaseDetailPage = () => {
       setChatMessages([]);
       setLastTurnMeta(null);
       setChatDeleteConfirm(false);
-      setSuccessMessage('Chat history cleared.');
+      setSuccessMessage(t.caseDetail.chatCleared);
     } catch (err) {
       setError(toApiError(err));
     } finally {
@@ -449,7 +451,7 @@ export const CaseDetailPage = () => {
       }));
       const refreshedTasks = await wealthApi.listCaseTasks(caseId);
       setTasks(refreshedTasks);
-      setSuccessMessage('Discovery check completed successfully.');
+      setSuccessMessage(t.caseDetail.discoveryDone);
     } catch (err) {
       setError(toApiError(err));
     } finally {
@@ -462,20 +464,22 @@ export const CaseDetailPage = () => {
       ? [
           {
             status: 'SUCCESS',
-            label: 'Case Created',
-            time: data.createdAt ? new Date(data.createdAt).toLocaleString() : 'N/A',
-            desc: `Case ${data.id} was created for ${data.clientName || data.clientId || 'client'}.`,
+            label: t.caseDetail.timelineCaseCreated,
+            time: data.createdAt ? new Date(data.createdAt).toLocaleString() : t.caseDetail.na,
+            desc: t.caseDetail.caseCreatedDesc
+              .replace('{id}', String(data.id))
+              .replace('{name}', data.clientName || data.clientId || t.caseDetail.clientFallback),
           },
         ]
       : [];
     const taskEvents = tasks.map((task) => ({
       status: task.status === 'COMPLETED' ? 'SUCCESS' : task.status === 'PENDING' ? 'PENDING' : 'REJECTED',
       label: task.taskType,
-      time: task.updatedAt ? new Date(task.updatedAt).toLocaleString() : 'N/A',
-      desc: `Task status: ${task.status}`,
+      time: task.updatedAt ? new Date(task.updatedAt).toLocaleString() : t.caseDetail.na,
+      desc: t.caseDetail.taskStatusDesc.replace('{status}', String(task.status)),
     }));
     return [...taskEvents, ...baseEvent];
-  }, [data, tasks]);
+  }, [data, tasks, t]);
 
   const completionRate = tasks.length
     ? Math.round((tasks.filter((task) => task.status === 'COMPLETED').length / tasks.length) * 100)
@@ -487,13 +491,13 @@ export const CaseDetailPage = () => {
       label: string;
       icon: typeof History;
     }> = [
-      { id: 'timeline', label: 'Case Timeline', icon: History },
-      { id: 'onboarding', label: 'Onboarding (KYC)', icon: Search },
+      { id: 'timeline', label: t.caseDetail.tabTimeline, icon: History },
+      { id: 'onboarding', label: t.caseDetail.tabOnboarding, icon: Search },
     ];
     if (portalCaps.canUsePlanningWorkspace) {
-      base.push({ id: 'planning', label: 'Wealth Planning', icon: FileText });
+      base.push({ id: 'planning', label: t.caseDetail.tabPlanning, icon: FileText });
     }
-    base.push({ id: 'execution', label: 'Execution Desk', icon: Zap });
+    base.push({ id: 'execution', label: t.caseDetail.tabExecution, icon: Zap });
     return base;
   }, [portalCaps.canUsePlanningWorkspace]);
 
@@ -503,8 +507,8 @@ export const CaseDetailPage = () => {
     }
   }, [mainTabs, activeTab]);
 
-  if (loading) return <div className="p-20 text-center animate-pulse italic font-serif text-zinc-400">Contextualizing Case Data...</div>;
-  if (!data) return <div className="p-20 text-center text-zinc-400">Case not found.</div>;
+  if (loading) return <div className="p-20 text-center animate-pulse italic font-serif text-zinc-400">{t.caseDetail.loadingCase}</div>;
+  if (!data) return <div className="p-20 text-center text-zinc-400">{t.caseDetail.caseNotFound}</div>;
 
   return (
     <div className="flex gap-6">
@@ -517,7 +521,7 @@ export const CaseDetailPage = () => {
         <div className="flex justify-between items-start">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-               <Link to="/internal/cases" className="text-zinc-400 hover:text-zinc-900 transition-colors">Case Portfolio</Link>
+               <Link to="/internal/cases" className="text-zinc-400 hover:text-zinc-900 transition-colors">{t.caseDetail.casePortfolio}</Link>
                <ChevronRight className="w-4 h-4 text-zinc-300" />
                <span className="font-mono text-zinc-900 font-bold">{data.id.slice(0, 8).toUpperCase()}</span>
             </div>
@@ -540,7 +544,7 @@ export const CaseDetailPage = () => {
                   className="mt-4 flex items-center gap-2 w-full justify-center rounded-xl bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors"
                 >
                   <Info className="w-4 h-4" />
-                  Profile Info &amp; Documents
+                  {t.caseDetail.profileDocuments}
                 </button>            
             </div>
           </div>
@@ -593,7 +597,7 @@ export const CaseDetailPage = () => {
                      className="space-y-6"
                   >
                      <div className="bg-white rounded-3xl border border-zinc-200 p-8 shadow-sm">
-                        <h3 className="font-serif italic text-xl mb-8">Case Timeline (API)</h3>
+                        <h3 className="font-serif italic text-xl mb-8">{t.caseDetail.timelineTitle}</h3>
                         <div className="space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-zinc-100">
                            {timelineEvents.map((event, i) => (
                              <div key={i} className="relative pl-10">
@@ -632,8 +636,8 @@ export const CaseDetailPage = () => {
                     <div className="bg-white rounded-3xl border border-zinc-200 p-8 shadow-sm">
                       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
                         <div>
-                          <h3 className="font-serif italic text-xl mb-1">Onboarding Tasks (API)</h3>
-                          <p className="text-zinc-500 text-sm">Live task statuses from backend case task records.</p>
+                          <h3 className="font-serif italic text-xl mb-1">{t.caseDetail.onboardingTitle}</h3>
+                          <p className="text-zinc-500 text-sm">{t.caseDetail.onboardingSubtitle}</p>
                         </div>
                         {portalCaps.canUseDiscoveryQuestionnaire && caseId ? (
                           <Link
@@ -641,12 +645,12 @@ export const CaseDetailPage = () => {
                             className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl text-xs font-bold hover:bg-indigo-500 shadow-sm"
                           >
                             <ClipboardList className="w-4 h-4" />
-                            Discovery questionnaire
+                            {t.caseDetail.discoveryQuestionnaire}
                           </Link>
                         ) : null}
                       </div>
                       <div className="grid grid-cols-2 gap-4">
-                         {tasks.length === 0 && <p className="text-sm text-zinc-400">No task records found.</p>}
+                         {tasks.length === 0 && <p className="text-sm text-zinc-400">{t.caseDetail.noTasks}</p>}
                          {tasks.map((check, i) => (
                            <div key={i} className="p-6 bg-zinc-50 rounded-2xl border border-zinc-100 flex flex-col justify-between h-32">
                               <div className="flex justify-between items-start">
@@ -666,7 +670,7 @@ export const CaseDetailPage = () => {
                                     />
                                  </div>
                                  <p className="text-[9px] font-mono text-zinc-400">
-                                   Last update: {check.updatedAt ? new Date(check.updatedAt).toLocaleString() : 'N/A'}
+                                   {t.caseDetail.lastUpdate} {check.updatedAt ? new Date(check.updatedAt).toLocaleString() : t.caseDetail.na}
                                  </p>
                               </div>
                            </div>
@@ -688,16 +692,16 @@ export const CaseDetailPage = () => {
                           <FileText className="w-10 h-10" />
                        </div>
                        <div className="space-y-2">
-                          <h3 className="text-2xl font-serif italic">Investment Strategy Draft</h3>
+                          <h3 className="text-2xl font-serif italic">{t.caseDetail.planningTitle}</h3>
                           <p className="text-sm text-zinc-500 max-w-sm mx-auto">
-                             Design a personalized wealth allocation based on discovery insights.
+                             {t.caseDetail.planningSubtitle}
                           </p>
                        </div>
                        <Link 
                          to={`/internal/cases/${caseId}/planning`}
                          className="inline-flex items-center gap-2 px-8 py-3 bg-zinc-900 border border-zinc-900 text-white rounded-2xl font-bold hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-900/10"
                        >
-                          Open Workspace <ArrowRight className="w-4 h-4" />
+                          {t.caseDetail.openWorkspace} <ArrowRight className="w-4 h-4" />
                        </Link>
                     </div>
                   </motion.div>
@@ -715,16 +719,16 @@ export const CaseDetailPage = () => {
                           <Zap className="w-10 h-10" />
                        </div>
                        <div className="space-y-2">
-                          <h3 className="text-2xl font-serif italic">Execution Protocol</h3>
+                          <h3 className="text-2xl font-serif italic">{t.caseDetail.executionTitle}</h3>
                           <p className="text-sm text-zinc-500 max-w-sm mx-auto">
-                             Transmit finalized trades to global markets and custodians.
+                             {t.caseDetail.executionSubtitle}
                           </p>
                        </div>
                        <Link 
                          to={`/internal/cases/${caseId}/execution`}
                          className="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/10"
                        >
-                          Enter Trading Console <ArrowRight className="w-4 h-4" />
+                          {t.caseDetail.enterTradingConsole} <ArrowRight className="w-4 h-4" />
                        </Link>
                     </div>
                   </motion.div>
@@ -737,7 +741,7 @@ export const CaseDetailPage = () => {
              <section className="bg-zinc-900 rounded-3xl p-6 text-white border border-zinc-800 shadow-xl overflow-hidden relative group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700"></div>
                 <div className="flex items-center justify-between mb-6">
-                   <h3 className="font-serif italic text-lg tracking-tight">Case Summary</h3>
+                   <h3 className="font-serif italic text-lg tracking-tight">{t.caseDetail.caseSummary}</h3>
                    <TrendingUp className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div className="space-y-6 relative z-10">
@@ -773,7 +777,7 @@ export const CaseDetailPage = () => {
                    </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-zinc-100">
-                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Case Metadata</p>
+                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">{t.caseDetail.caseMetadata}</p>
                    <div className="flex items-start gap-3">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0"></div>
                       <p className="text-xs text-zinc-600 leading-relaxed">
@@ -792,10 +796,10 @@ export const CaseDetailPage = () => {
           <div className="min-w-0">
             <h3 className="font-serif italic text-base text-white leading-tight truncate flex items-center gap-2">
               <MessageCircle className="w-4 h-4 shrink-0" />
-              AI Chat
+              {t.caseDetail.aiChat}
             </h3>
             <p className="text-[10px] font-mono text-zinc-400 uppercase tracking-wide truncate mt-0.5">
-              Phase {data.phase ?? '—'} · Thread persisted
+              {t.caseDetail.phasePrefix} {data.phase ?? '—'} · {t.caseDetail.threadPersisted}
             </p>
           </div>
           <span className="flex items-center gap-3 shrink-0">
@@ -803,7 +807,7 @@ export const CaseDetailPage = () => {
               type="button"
               onClick={() => setChatDeleteConfirm(true)}
               disabled={chatSending || !chatThreadId || chatMessages.length === 0}
-              title="Clear chat history"
+              title={t.caseDetail.clearChatTitle}
               className={cn(
                 'rounded-lg p-1.5 text-zinc-400 transition-colors',
                 chatSending || !chatThreadId || chatMessages.length === 0
@@ -815,7 +819,7 @@ export const CaseDetailPage = () => {
             </button>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest">Live</span>
+              <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest">{t.caseDetail.live}</span>
             </span>
           </span>
         </div>
@@ -823,7 +827,7 @@ export const CaseDetailPage = () => {
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4">
           {chatLoadError && <p className="text-xs text-rose-600">{chatLoadError.message}</p>}
           {!chatThreadId && !chatLoadError && (
-            <p className="text-sm text-zinc-400">Loading conversation…</p>
+            <p className="text-sm text-zinc-400">{t.caseDetail.loadingConversation}</p>
           )}
           {lastTurnMeta && (lastTurnMeta.intent || lastTurnMeta.phase || lastTurnMeta.assessment) && (
             <div className="shrink-0 rounded-xl bg-emerald-50/60 px-3 py-2 text-[11px] text-emerald-900">
@@ -837,7 +841,7 @@ export const CaseDetailPage = () => {
           )}
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-2xl bg-zinc-50/50 border border-zinc-200 p-3">
             {chatMessages.length === 0 && chatThreadId && (
-              <p className="text-sm text-zinc-400">No messages yet. Ask about this client in natural language.</p>
+              <p className="text-sm text-zinc-400">{t.caseDetail.noMessages}</p>
             )}
             {chatMessages.map((m) => {
               const snapAtt = chatAttachmentsFromSnapshot(m.contextSnapshot);
@@ -903,7 +907,7 @@ export const CaseDetailPage = () => {
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), void handleSendChat())}
-              placeholder="Ask or instruct the AI…"
+              placeholder={t.caseDetail.askOrInstruct}
               rows={2}
               className="w-full rounded-xl bg-zinc-50 border border-zinc-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10 resize-none"
             />
@@ -940,7 +944,7 @@ export const CaseDetailPage = () => {
                 )}
               >
                 <Paperclip className="h-3.5 w-3.5" />
-                Attach
+                {t.caseDetail.attach}
               </button>
               <button
                 type="button"
@@ -958,7 +962,7 @@ export const CaseDetailPage = () => {
                 )}
               >
                 {chatSending ? <Clock className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
-                Send
+                {t.caseDetail.send}
               </button>
             </div>
           </div>
@@ -987,9 +991,9 @@ export const CaseDetailPage = () => {
                   <Trash2 className="w-5 h-5 text-rose-600" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-zinc-900">Clear Chat History</h3>
+                  <h3 className="text-base font-bold text-zinc-900">{t.caseDetail.clearHistory}</h3>
                   <p className="text-sm text-zinc-500 mt-1">
-                    This will permanently delete all {chatMessages.length} message{chatMessages.length !== 1 ? 's' : ''} in this conversation. This action cannot be undone.
+                    {t.caseDetail.deleteAllConfirm.replace('{count}', String(chatMessages.length))}
                   </p>
                 </div>
               </div>
@@ -1000,7 +1004,7 @@ export const CaseDetailPage = () => {
                   disabled={chatDeleting}
                   className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition-colors disabled:opacity-50"
                 >
-                  Cancel
+                  {t.caseDetail.cancel}
                 </button>
                 <button
                   type="button"
@@ -1009,7 +1013,7 @@ export const CaseDetailPage = () => {
                   className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 transition-colors disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {chatDeleting && <Clock className="w-3.5 h-3.5 animate-spin" />}
-                  {chatDeleting ? 'Deleting…' : 'Delete All'}
+                  {chatDeleting ? t.caseDetail.deleting : t.caseDetail.deleteAll}
                 </button>
               </div>
             </motion.div>
@@ -1038,7 +1042,7 @@ export const CaseDetailPage = () => {
               <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-100 shrink-0">
                 <h2 className="text-xl font-serif italic text-zinc-900 flex items-center gap-2">
                   <UserRound className="w-5 h-5 text-blue-600" />
-                  Profile Info &amp; Documents
+                  {t.caseDetail.profileDocuments}
                 </h2>
                 <button
                   type="button"
@@ -1053,7 +1057,7 @@ export const CaseDetailPage = () => {
                 {profileLoading && (
                   <div className="flex items-center justify-center py-12">
                     <Clock className="w-5 h-5 animate-spin text-zinc-400" />
-                    <span className="ml-2 text-sm text-zinc-400">Loading profile…</span>
+                    <span className="ml-2 text-sm text-zinc-400">{t.caseDetail.loadingProfile}</span>
                   </div>
                 )}
 
@@ -1066,8 +1070,8 @@ export const CaseDetailPage = () => {
                           <UserRound className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-zinc-900">{profileData.name || 'Unknown'}</p>
-                          <p className="text-xs text-zinc-500 font-mono">{profileData.clientId || 'N/A'}</p>
+                          <p className="text-lg font-bold text-zinc-900">{profileData.name || t.caseDetail.unknown}</p>
+                          <p className="text-xs text-zinc-500 font-mono">{profileData.clientId || t.caseDetail.na}</p>
                         </div>
                         {profileData.status && (
                           <span className="ml-auto text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md bg-emerald-50 text-emerald-700">
@@ -1080,18 +1084,18 @@ export const CaseDetailPage = () => {
                     {/* Profile Details */}
                     <section className="bg-zinc-50 rounded-2xl border border-zinc-100 p-5 space-y-3">
                       <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                        <Shield className="w-3.5 h-3.5" /> Profile Details
+                        <Shield className="w-3.5 h-3.5" /> {t.caseDetail.profileDetails}
                       </h3>
                       <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                         {([
-                          ['Risk Profile', profileData.riskProfile],
-                          ['Residency', profileData.residency],
-                          ['Date of Birth', profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toLocaleDateString() : null],
-                          ['Marital Status', profileData.maritalStatus],
-                          ['Nationality', profileData.nationality],
-                          ['Phone', profileData.primaryPhone],
-                          ['Email', profileData.primaryEmail],
-                          ['Registered', profileData.createdAt ? new Date(profileData.createdAt).toLocaleDateString() : null],
+                          [t.caseDetail.profRiskProfile, profileData.riskProfile],
+                          [t.caseDetail.profResidency, profileData.residency],
+                          [t.caseDetail.profDateOfBirth, profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toLocaleDateString() : null],
+                          [t.caseDetail.profMaritalStatus, profileData.maritalStatus],
+                          [t.caseDetail.profNationality, profileData.nationality],
+                          [t.caseDetail.profPhone, profileData.primaryPhone],
+                          [t.caseDetail.profEmail, profileData.primaryEmail],
+                          [t.caseDetail.profRegistered, profileData.createdAt ? new Date(profileData.createdAt).toLocaleDateString() : null],
                         ] as [string, string | null | undefined][]).map(([label, value]) => (
                           <div key={label}>
                             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{label}</p>
@@ -1101,7 +1105,7 @@ export const CaseDetailPage = () => {
                       </div>
                       {profileData.contactAddress && (
                         <div className="pt-2 border-t border-zinc-200">
-                          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Address</p>
+                          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.caseDetail.address}</p>
                           <p className="text-sm text-zinc-900 mt-0.5">{profileData.contactAddress}</p>
                         </div>
                       )}
@@ -1110,11 +1114,11 @@ export const CaseDetailPage = () => {
                     {/* Documents */}
                     <section className="space-y-3">
                       <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                        <FileText className="w-3.5 h-3.5" /> Case Documents
-                        <span className="ml-auto text-[10px] font-mono text-zinc-500">{profileDocs.length} file{profileDocs.length !== 1 ? 's' : ''}</span>
+                        <FileText className="w-3.5 h-3.5" /> {t.caseDetail.caseDocuments}
+                        <span className="ml-auto text-[10px] font-mono text-zinc-500">{t.caseDetail.filesCount.replace('{count}', String(profileDocs.length))}</span>
                       </h3>
                       {profileDocs.length === 0 && (
-                        <p className="text-sm text-zinc-400 py-4 text-center">No documents uploaded yet.</p>
+                        <p className="text-sm text-zinc-400 py-4 text-center">{t.caseDetail.noDocuments}</p>
                       )}
                       <div className="space-y-2">
                         {profileDocs.map((doc) => (
@@ -1131,7 +1135,7 @@ export const CaseDetailPage = () => {
                               <FileText className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs font-bold text-zinc-900 truncate">{doc.originalFilename || 'Untitled'}</p>
+                              <p className="text-xs font-bold text-zinc-900 truncate">{doc.originalFilename || t.caseDetail.untitled}</p>
                               <div className="flex items-center gap-2 mt-0.5">
                                 <span className="text-[10px] text-zinc-400 font-mono">{doc.docKind || 'UPLOAD'}</span>
                                 {doc.phaseCode && <span className="text-[10px] text-zinc-400">{doc.phaseCode}</span>}
@@ -1160,11 +1164,11 @@ export const CaseDetailPage = () => {
                     {/* Assets */}
                     <section className="space-y-3">
                       <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                        <Wallet className="w-3.5 h-3.5" /> Assets
-                        <span className="ml-auto text-[10px] font-mono text-zinc-500">{profileAssets.length} item{profileAssets.length !== 1 ? 's' : ''}</span>
+                        <Wallet className="w-3.5 h-3.5" /> {t.caseDetail.assets}
+                        <span className="ml-auto text-[10px] font-mono text-zinc-500">{t.caseDetail.itemsCount.replace('{count}', String(profileAssets.length))}</span>
                       </h3>
                       {profileAssets.length === 0 && (
-                        <p className="text-sm text-zinc-400 py-4 text-center">No assets recorded yet.</p>
+                        <p className="text-sm text-zinc-400 py-4 text-center">{t.caseDetail.noAssets}</p>
                       )}
                       <div className="space-y-2">
                         {profileAssets.map((asset, idx) => (
@@ -1176,10 +1180,10 @@ export const CaseDetailPage = () => {
                               <Wallet className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs font-bold text-zinc-900">{asset.assetType || 'Unknown Type'}</p>
+                              <p className="text-xs font-bold text-zinc-900">{asset.assetType || t.caseDetail.unknownType}</p>
                               {asset.value != null && (
                                 <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
-                                  Value: {asset.value.toLocaleString()}
+                                  {t.caseDetail.valueLabel} {asset.value.toLocaleString()}
                                 </p>
                               )}
                             </div>
@@ -1191,11 +1195,11 @@ export const CaseDetailPage = () => {
                     {/* Goals */}
                     <section className="space-y-3">
                       <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                        <Target className="w-3.5 h-3.5" /> Goals
-                        <span className="ml-auto text-[10px] font-mono text-zinc-500">{profileGoals.length} item{profileGoals.length !== 1 ? 's' : ''}</span>
+                        <Target className="w-3.5 h-3.5" /> {t.caseDetail.goals}
+                        <span className="ml-auto text-[10px] font-mono text-zinc-500">{t.caseDetail.itemsCount.replace('{count}', String(profileGoals.length))}</span>
                       </h3>
                       {profileGoals.length === 0 && (
-                        <p className="text-sm text-zinc-400 py-4 text-center">No goals recorded yet.</p>
+                        <p className="text-sm text-zinc-400 py-4 text-center">{t.caseDetail.noGoals}</p>
                       )}
                       <div className="space-y-2">
                         {profileGoals.map((goal, idx) => (
@@ -1207,10 +1211,10 @@ export const CaseDetailPage = () => {
                               <Target className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs font-bold text-zinc-900">{goal.goalType || 'Unknown Goal'}</p>
+                              <p className="text-xs font-bold text-zinc-900">{goal.goalType || t.caseDetail.unknownGoal}</p>
                               {goal.targetAmount != null && (
                                 <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
-                                  Target: {goal.targetAmount.toLocaleString()}
+                                  {t.caseDetail.targetLabel} {goal.targetAmount.toLocaleString()}
                                 </p>
                               )}
                             </div>
@@ -1222,7 +1226,7 @@ export const CaseDetailPage = () => {
                 )}
 
                 {!profileLoading && !profileData && (
-                  <p className="text-sm text-zinc-400 text-center py-12">No profile data available.</p>
+                  <p className="text-sm text-zinc-400 text-center py-12">{t.caseDetail.noProfileData}</p>
                 )}
               </div>
             </motion.div>

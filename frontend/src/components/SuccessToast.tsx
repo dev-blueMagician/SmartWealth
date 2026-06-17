@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useT } from '../i18n';
 
 type ToastVariant = 'success' | 'warning';
 
@@ -11,6 +12,7 @@ type SuccessToastProps = {
 };
 
 export const SuccessToast = ({ message, onClose, variant = 'success' }: SuccessToastProps) => {
+  const t = useT();
   if (!message) return null;
 
   const isWarning = variant === 'warning';
@@ -40,7 +42,7 @@ export const SuccessToast = ({ message, onClose, variant = 'success' }: SuccessT
         <button
           onClick={onClose}
           className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
-          aria-label={isWarning ? 'Close warning notification' : 'Close success notification'}
+          aria-label={isWarning ? t.common.closeWarning : t.common.closeSuccess}
         >
           <X className="w-4 h-4" />
         </button>

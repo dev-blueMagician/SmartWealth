@@ -8,11 +8,13 @@ import { wealthApi, type AiLlmProfileAdminRow } from '../../../services/wealthAp
 import { toApiError, type ApiError } from '../../../services/apiError';
 import { ErrorPopup } from '../../../components/ErrorPopup';
 import { SuccessToast } from '../../../components/SuccessToast';
+import { useT } from '../../../i18n';
 
 const PROVIDERS = ['deepseek', 'azure_openai'] as const;
 type LlmProviderId = (typeof PROVIDERS)[number];
 
 export function AiEngineLlmProfilesPage() {
+  const t = useT();
   const [rows, setRows] = useState<AiLlmProfileAdminRow[]>([]);
   const [active, setActive] = useState<AiLlmProfileAdminRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,10 +132,10 @@ export function AiEngineLlmProfilesPage() {
     try {
       if (editingId) {
         await wealthApi.updateAdminLlmProfile(editingId, payload);
-        setSuccessMessage('Profile updated.');
+        setSuccessMessage(t.aiLlmProfiles.updatedToast);
       } else {
         await wealthApi.createAdminLlmProfile(payload);
-        setSuccessMessage('Profile created.');
+        setSuccessMessage(t.aiLlmProfiles.createdToast);
       }
       resetForm();
       await load();
@@ -143,10 +145,10 @@ export function AiEngineLlmProfilesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this LLM profile?')) return;
+    if (!window.confirm(t.aiLlmProfiles.deleteConfirm)) return;
     try {
       await wealthApi.deleteAdminLlmProfile(id);
-      setSuccessMessage('Deleted.');
+      setSuccessMessage(t.aiLlmProfiles.deletedToast);
       if (editingId === id) resetForm();
       await load();
     } catch (err) {
@@ -160,7 +162,7 @@ export function AiEngineLlmProfilesPage() {
       <SuccessToast message={successMessage} onClose={() => setSuccessMessage(null)} />
 
       <div>
-        <h2 className="text-xl font-semibold text-slate-900">AI settings — LLM profiles</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t.aiLlmProfiles.title}</h2>
         <p className="text-sm text-slate-500 mt-1">
           Profiles are stored in <span className="font-mono">ai_llm_profile</span>. Optional API keys are saved in the database (restrict DB access);
           the AI-engine merges the <span className="font-semibold">active</span> profile over environment defaults at runtime.
@@ -173,7 +175,7 @@ export function AiEngineLlmProfilesPage() {
           <span className="font-mono">{active.code}</span> · {active.llmProvider}
         </div>
       ) : (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">No active profile (404).</div>
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{t.aiLlmProfiles.noActiveProfile}</div>
       )}
 
       <form onSubmit={(e) => void handleSubmit(e)} className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-sm">
@@ -258,10 +260,10 @@ export function AiEngineLlmProfilesPage() {
                         setDeepseekApiKeyInput('');
                       }}
                     >
-                      Clear stored key on save
+                      {t.aiLlmProfiles.clearStoredKey}
                     </button>
                     {pendingClearDeepseekKey ? (
-                      <span className="text-[11px] text-amber-700">Will remove key when you save.</span>
+                      <span className="text-[11px] text-amber-700">{t.aiLlmProfiles.willRemoveKey}</span>
                     ) : null}
                   </div>
                 ) : null}
@@ -324,10 +326,10 @@ export function AiEngineLlmProfilesPage() {
                         setAzureOpenaiApiKeyInput('');
                       }}
                     >
-                      Clear stored key on save
+                      {t.aiLlmProfiles.clearStoredKey}
                     </button>
                     {pendingClearAzureKey ? (
-                      <span className="text-[11px] text-amber-700">Will remove key when you save.</span>
+                      <span className="text-[11px] text-amber-700">{t.aiLlmProfiles.willRemoveKey}</span>
                     ) : null}
                   </div>
                 ) : null}
@@ -361,22 +363,22 @@ export function AiEngineLlmProfilesPage() {
         </div>
         <div className="flex gap-2">
           <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-500">
-            {editingId ? 'Save' : 'Create'}
+            {editingId ? t.aiLlmProfiles.save : t.aiLlmProfiles.createProfile}
           </button>
           {editingId ? (
             <button type="button" onClick={() => resetForm()} className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold">
-              Cancel
+              {t.aiLlmProfiles.cancel}
             </button>
           ) : null}
         </div>
       </form>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="px-4 py-3 border-b border-slate-100 text-xs font-bold uppercase text-slate-400">Profiles</div>
+        <div className="px-4 py-3 border-b border-slate-100 text-xs font-bold uppercase text-slate-400">{t.aiLlmProfiles.profiles}</div>
         {loading ? (
-          <div className="p-8 text-sm text-slate-500">Loading…</div>
+          <div className="p-8 text-sm text-slate-500">{t.aiLlmProfiles.loading}</div>
         ) : rows.length === 0 ? (
-          <div className="p-8 text-sm text-slate-500">No profiles.</div>
+          <div className="p-8 text-sm text-slate-500">{t.aiLlmProfiles.noProfiles}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -396,10 +398,10 @@ export function AiEngineLlmProfilesPage() {
                     <td className="px-4 py-2">{r.active ? 'yes' : 'no'}</td>
                     <td className="px-4 py-2 text-right space-x-2">
                       <button type="button" onClick={() => startEdit(r)} className="text-indigo-600 text-xs font-bold">
-                        Edit
+                        {t.aiLlmProfiles.edit}
                       </button>
                       <button type="button" onClick={() => void handleDelete(r.id)} className="text-rose-600 text-xs font-bold">
-                        Delete
+                        {t.aiLlmProfiles.delete}
                       </button>
                     </td>
                   </tr>

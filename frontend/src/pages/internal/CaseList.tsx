@@ -7,9 +7,11 @@ import { useAuth } from '../../auth/AuthContext';
 import { wealthApi } from '../../services/wealthApi';
 import { toApiError, type ApiError } from '../../services/apiError';
 import { ErrorPopup } from '../../components/ErrorPopup';
+import { useT } from '../../i18n';
 
 export const CaseListPage = () => {
   const { portalCaps } = useAuth();
+  const t = useT();
   const [cases, setCases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
@@ -39,15 +41,15 @@ export const CaseListPage = () => {
       <ErrorPopup error={error} onClose={() => setError(null)} />
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-serif italic text-zinc-900">Case Portfolio</h1>
-          <p className="text-zinc-500 text-sm mt-1">Manage and track active service lifecycle cases.</p>
+          <h1 className="text-3xl font-serif italic text-zinc-900">{t.caseList.title}</h1>
+          <p className="text-zinc-500 text-sm mt-1">{t.caseList.subtitle}</p>
         </div>
         {portalCaps.canCreateCase && (
         <Link 
           to="/internal/cases/new" 
           className="px-6 py-3 bg-zinc-900 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-900/10"
         >
-          <Plus className="w-5 h-5" /> New Service Case
+          <Plus className="w-5 h-5" /> {t.caseList.newCase}
         </Link>
         )}
       </div>
@@ -58,12 +60,12 @@ export const CaseListPage = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <input 
               type="text" 
-              placeholder="Filter by ID, Client, or Owner..." 
+              placeholder={t.caseList.filterPlaceholder}
               className="w-full pl-10 pr-4 py-2 bg-white border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
             />
           </div>
           <button className="px-4 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-bold text-zinc-600 flex items-center gap-2 hover:bg-zinc-50">
-            <Filter className="w-4 h-4" /> Filters
+            <Filter className="w-4 h-4" /> {t.caseList.filters}
           </button>
         </div>
 
@@ -71,11 +73,11 @@ export const CaseListPage = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-zinc-50 border-b border-zinc-100">
-                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Case Identifier</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Client Engagement</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Workflow Stage</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Primary Owner</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Activity</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.caseList.colCaseId}</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.caseList.colClient}</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.caseList.colStage}</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.caseList.colOwner}</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">{t.caseList.colActivity}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -92,9 +94,9 @@ export const CaseListPage = () => {
                          <div className="p-4 bg-zinc-50 rounded-full">
                             <Briefcase className="w-8 h-8 text-zinc-300" />
                          </div>
-                         <p className="text-sm font-medium text-zinc-400 italic font-serif">No active cases found in your viewport.</p>
+                         <p className="text-sm font-medium text-zinc-400 italic font-serif">{t.caseList.emptyState}</p>
                          {portalCaps.canCreateCase && (
-                         <Link to="/internal/cases/new" className="text-blue-600 font-bold text-xs">Initialize First Case</Link>
+                         <Link to="/internal/cases/new" className="text-blue-600 font-bold text-xs">{t.caseList.initFirstCase}</Link>
                          )}
                       </div>
                    </td>
@@ -134,7 +136,7 @@ export const CaseListPage = () => {
                     <td className="px-6 py-4 text-sm text-zinc-600 font-medium">{item.rmId || 'RM'}</td>
                     <td className="px-6 py-4 text-right">
                        <Link to={`/internal/cases/${item.id}`} className="inline-flex items-center gap-1 text-zinc-400 group-hover:text-blue-600 transition-colors">
-                          <span className="text-[10px] font-bold uppercase tracking-widest">Detail</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest">{t.caseList.detail}</span>
                           <ChevronRight className="w-4 h-4" />
                        </Link>
                     </td>

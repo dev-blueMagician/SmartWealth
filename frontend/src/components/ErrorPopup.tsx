@@ -1,20 +1,23 @@
 import { AlertTriangle, XCircle, X } from 'lucide-react';
 import type { ApiError } from '../services/apiError';
+import { useT } from '../i18n';
+import type { Dict } from '../i18n/dict';
+
+function getErrorTitle(error: ApiError, t: Dict): string {
+  if (error.code === 'BUSINESS_ERROR') return t.errorPopup.businessError;
+  if (error.code === 'VALIDATION_ERROR') return t.errorPopup.invalidRequest;
+  if (error.code === 'NOT_FOUND') return t.errorPopup.notFound;
+  if (error.code === 'SYSTEM_ERROR' || error.status >= 500) return t.errorPopup.systemError;
+  return t.errorPopup.requestError;
+}
 
 type ErrorPopupProps = {
   error: ApiError | null;
   onClose: () => void;
 };
 
-function getErrorTitle(error: ApiError): string {
-  if (error.code === 'BUSINESS_ERROR') return 'Business Rule Error';
-  if (error.code === 'VALIDATION_ERROR') return 'Invalid Request';
-  if (error.code === 'NOT_FOUND') return 'Data Not Found';
-  if (error.code === 'SYSTEM_ERROR' || error.status >= 500) return 'System Error';
-  return 'Request Error';
-}
-
 export const ErrorPopup = ({ error, onClose }: ErrorPopupProps) => {
+  const t = useT();
   if (!error) return null;
 
   const isSystemError = error.code === 'SYSTEM_ERROR' || error.status >= 500;
@@ -30,14 +33,14 @@ export const ErrorPopup = ({ error, onClose }: ErrorPopupProps) => {
               {isSystemError ? <XCircle className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
             </div>
             <div>
-              <p className="text-sm font-bold text-zinc-900">{getErrorTitle(error)}</p>
+              <p className="text-sm font-bold text-zinc-900">{getErrorTitle(error, t)}</p>
               <p className="text-[11px] font-mono text-zinc-400 mt-1">{error.code}</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
-            aria-label="Close error popup"
+            aria-label={t.common.closeError}
           >
             <X className="w-4 h-4" />
           </button>
@@ -49,7 +52,7 @@ export const ErrorPopup = ({ error, onClose }: ErrorPopupProps) => {
               onClick={onClose}
               className="px-4 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-colors"
             >
-              Close
+              {t.common.close}
             </button>
           </div>
         </div>

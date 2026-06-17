@@ -11,12 +11,14 @@ import { ErrorPopup } from '../../components/ErrorPopup';
 import { SuccessToast } from '../../components/SuccessToast';
 import { cn } from '../../lib/utils';
 import { Plus, Shield, X } from 'lucide-react';
+import { useT } from '../../i18n';
 
 const ROLE_OPTIONS = ['RM', 'WM', 'IM', 'ADMIN', 'CLIENT'] as const;
 
 export function UserManagementPage() {
   const { portalCaps } = useAuth();
   const canAdmin = portalCaps.canManagePortalUsers;
+  const t = useT();
 
   const [users, setUsers] = useState<PortalUserSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,15 +109,15 @@ export function UserManagementPage() {
 
   const handleCreate = async () => {
     if (!newUsername.trim() || !newPassword) {
-      setError(toApiError(new Error('Username and password are required.')));
+      setError(toApiError(new Error(t.userManagement.errUsernamePassword)));
       return;
     }
     if (newRoles.length === 0) {
-      setError(toApiError(new Error('Select at least one role.')));
+      setError(toApiError(new Error(t.userManagement.errSelectRole)));
       return;
     }
     if (newRoles.includes('CLIENT') && !newClientId.trim()) {
-      setError(toApiError(new Error('Select a wealth client for the CLIENT role.')));
+      setError(toApiError(new Error(t.userManagement.errSelectClient)));
       return;
     }
     setCreating(true);
@@ -128,7 +130,7 @@ export function UserManagementPage() {
         roles: newRoles,
         clientId: newRoles.includes('CLIENT') && newClientId.trim() ? newClientId.trim() : undefined,
       });
-      setSuccessMessage('User created.');
+      setSuccessMessage(t.userManagement.createdToast);
       setCreateModalOpen(false);
       resetCreateForm();
       await load();
@@ -142,7 +144,7 @@ export function UserManagementPage() {
   const toggleEnabled = async (user: PortalUserSummary) => {
     try {
       await wealthApi.patchPortalUser(user.id, { enabled: !user.enabled });
-      setSuccessMessage(`User ${user.username} updated.`);
+      setSuccessMessage(t.userManagement.updatedToast.replace('{username}', user.username));
       await load();
     } catch (err) {
       setError(toApiError(err));
@@ -153,8 +155,8 @@ export function UserManagementPage() {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center text-amber-900">
         <Shield className="w-10 h-10 mx-auto mb-3 opacity-70" />
-        <p className="font-semibold">Administrator role required</p>
-        <p className="text-sm mt-2 text-amber-800/90">Sign in as an ADMIN user to manage staff accounts.</p>
+        <p className="font-semibold">{t.userManagement.adminRequired}</p>
+        <p className="text-sm mt-2 text-amber-800/90">{t.userManagement.adminRequiredDesc}</p>
       </div>
     );
   }
@@ -166,10 +168,9 @@ export function UserManagementPage() {
 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-zinc-900 tracking-tight">User management</h2>
+          <h2 className="text-xl font-semibold text-zinc-900 tracking-tight">{t.userManagement.title}</h2>
           <p className="text-sm text-zinc-500 mt-1">
-            Maintain portal accounts (ADMIN only) — click <span className="font-bold">Create user</span> to add
-            a new account.
+            {t.userManagement.subtitle}
           </p>
         </div>
         <button
@@ -178,13 +179,13 @@ export function UserManagementPage() {
           className="px-4 py-2 bg-zinc-900 text-white rounded-xl text-sm font-bold hover:bg-zinc-800 flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          Create user
+          {t.userManagement.createUser}
         </button>
       </header>
 
       <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between">
-          <h3 className="font-serif italic text-lg text-zinc-900">Accounts</h3>
+          <h3 className="font-serif italic text-lg text-zinc-900">{t.userManagement.accounts}</h3>
           <button
             type="button"
             onClick={() => {
@@ -196,16 +197,16 @@ export function UserManagementPage() {
             Refresh
           </button>
         </div>
-        {loading && <div className="px-6 py-10 text-sm text-zinc-500">Loading…</div>}
+        {loading && <div className="px-6 py-10 text-sm text-zinc-500">{t.userManagement.loading}</div>}
         {!loading && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-zinc-50 text-left text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                  <th className="px-6 py-3">User</th>
-                  <th className="px-6 py-3">Roles</th>
+                  <th className="px-6 py-3">{t.userManagement.colUser}</th>
+                  <th className="px-6 py-3">{t.userManagement.colRoles}</th>
                   <th className="px-6 py-3">Client</th>
-                  <th className="px-6 py-3 text-right">Status</th>
+                  <th className="px-6 py-3 text-right">{t.userManagement.colStatus}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -230,7 +231,7 @@ export function UserManagementPage() {
                             : 'border-zinc-200 text-zinc-500 bg-zinc-100',
                         )}
                       >
-                        {u.enabled ? 'Active' : 'Disabled'}
+                        {u.enabled ? t.userManagement.active : t.userManagement.disabled}
                       </button>
                     </td>
                   </tr>
@@ -258,16 +259,16 @@ export function UserManagementPage() {
             <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-zinc-100 shrink-0">
               <div>
                 <h2 id="create-user-modal-title" className="text-lg font-bold text-zinc-900">
-                  Create user
+                  {t.userManagement.createUserTitle}
                 </h2>
-                <p className="text-xs text-zinc-500 mt-0.5">Add a new portal account with roles and optional client link.</p>
+                <p className="text-xs text-zinc-500 mt-0.5">{t.userManagement.createUserDesc}</p>
               </div>
               <button
                 type="button"
                 onClick={closeCreateModal}
                 disabled={creating}
                 className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 disabled:opacity-50"
-                aria-label="Close"
+                aria-label={t.common.close}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -283,7 +284,7 @@ export function UserManagementPage() {
               <div className="overflow-y-auto px-5 py-4 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label className="space-y-1 block">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Username</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{t.userManagement.username}</span>
                     <input
                       value={newUsername}
                       onChange={(e) => setNewUsername(e.target.value)}
@@ -293,7 +294,7 @@ export function UserManagementPage() {
                     />
                   </label>
                   <label className="space-y-1 block">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Password</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{t.userManagement.password}</span>
                     <input
                       type="password"
                       value={newPassword}
@@ -303,7 +304,7 @@ export function UserManagementPage() {
                     />
                   </label>
                   <label className="space-y-1 block sm:col-span-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Email (optional)</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{t.userManagement.emailOptional}</span>
                     <input
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
@@ -312,7 +313,7 @@ export function UserManagementPage() {
                   </label>
                 </div>
                 <div className="space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Roles</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{t.userManagement.roles}</span>
                   <div className="flex flex-wrap gap-2">
                     {ROLE_OPTIONS.map((code) => (
                       <button
@@ -336,7 +337,7 @@ export function UserManagementPage() {
                 </div>
                 {newRoles.includes('CLIENT') && (
                   <label className="space-y-1 block">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Wealth client</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{t.userManagement.wealthClient}</span>
                     <select
                       value={newClientId}
                       onChange={(e) => setNewClientId(e.target.value)}
@@ -369,7 +370,7 @@ export function UserManagementPage() {
                   disabled={creating}
                   className="px-4 py-2 bg-zinc-900 text-white rounded-xl text-sm font-bold hover:bg-zinc-800 disabled:opacity-50"
                 >
-                  {creating ? 'Creating…' : 'Create user'}
+                  {creating ? t.userManagement.creating : t.userManagement.createUser}
                 </button>
                 <button
                   type="button"
@@ -377,7 +378,7 @@ export function UserManagementPage() {
                   disabled={creating}
                   className="px-4 py-2 border border-zinc-200 rounded-xl text-sm font-bold bg-white disabled:opacity-50"
                 >
-                  Cancel
+                  {t.userManagement.cancel}
                 </button>
               </div>
             </form>
