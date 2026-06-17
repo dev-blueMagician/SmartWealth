@@ -5,6 +5,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { wealthApi } from '../services/wealthApi';
+import { ApiError } from '../services/apiError';
 import { clearPortalAuth, loadPortalAuth, savePortalAuth, type PortalAuth } from './session';
 import { buildPortalCapabilities, defaultPortalCapabilities, type PortalCapabilities } from './portalPermissions';
 
@@ -42,9 +43,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         savePortalAuth(next);
         setAuth(next);
-      } catch {
-        clearPortalAuth();
-        if (!cancelled) setAuth(null);
+      } catch (err) {
+        if (cancelled) return;
+        // Only sign the user out on a genuine auth failure (token invalid/expired).
+        // Transient problems — network blip, CORS, backend down, 5xx — must NOT
+        // discard a valid session, otherwise a momentary hiccup on load bounces
+        // the user back to the login screen even though they are signed in.
+        const isAuthFailure = err instanceof ApiError && (err.status === 401 || err.status === 403);
+        if (isAuthFailure) {
+          clearPortalAuth();
+          setAuth(null);
+        } else {
+          // Keep the stored session and trust the cached identity for now.
+          setAuth(stored);
+        }
       } finally {
         if (!cancelled) setBootstrapping(false);
       }

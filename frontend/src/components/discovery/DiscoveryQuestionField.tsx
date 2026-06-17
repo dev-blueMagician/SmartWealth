@@ -7,6 +7,7 @@ import {
   usesOptionsList,
 } from '../../lib/discoveryUtils';
 import type { DiscoveryQuestion, DiscoveryQuestionOption } from '../../services/discoveryTypes';
+import { useT } from '../../i18n';
 
 type Props = {
   question: DiscoveryQuestion;
@@ -37,6 +38,7 @@ export function DiscoveryQuestionField({
   showBlockControls,
   blockCount = 1,
 }: Props) {
+  const t = useT();
   const answerType = normalizeAnswerType(question.answerType);
   const qid = question.questionId;
   const id = `${qid}-${blockIndex}`;
@@ -106,7 +108,7 @@ export function DiscoveryQuestionField({
           onChange={(e) => onChange(qid, blockIndex, e.target.value || null)}
           className={cn('w-full px-3 py-2 rounded-xl border text-sm', borderClass)}
         >
-          <option value="">Select…</option>
+          <option value="">{t.discoveryField.selectPlaceholder}</option>
           {options.map((opt) => (
             <option key={opt.id} value={opt.optionValue ?? opt.optionLabel ?? ''}>
               {opt.optionLabel ?? opt.optionValue}
@@ -138,7 +140,7 @@ export function DiscoveryQuestionField({
         onChange={(e) => setLocalText(e.target.value)}
         onBlur={commitText}
         className={cn('w-full px-3 py-2 rounded-xl border text-sm', borderClass)}
-        placeholder="Your answer"
+        placeholder={t.discoveryField.answerPlaceholder}
       />
     );
   };
@@ -156,14 +158,14 @@ export function DiscoveryQuestionField({
             <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">{qid}</span>
             {question.requiredFlag ? (
               <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-rose-100 text-rose-700">
-                Required
+                {t.discoveryField.required}
               </span>
             ) : null}
             {question.repeatable && blockCount > 1 ? (
-              <span className="text-[9px] font-mono text-zinc-400">block {blockIndex + 1}</span>
+              <span className="text-[9px] font-mono text-zinc-400">{t.discoveryField.block.replace('{n}', String(blockIndex + 1))}</span>
             ) : null}
             {saving ? (
-              <span className="text-[9px] text-indigo-500 animate-pulse">Saving…</span>
+              <span className="text-[9px] text-indigo-500 animate-pulse">{t.discoveryField.saving}</span>
             ) : null}
           </div>
           <p className="text-sm font-medium text-zinc-900">{question.questionText ?? qid}</p>
@@ -173,7 +175,7 @@ export function DiscoveryQuestionField({
             {blockIndex === blockCount - 1 ? (
               <button
                 type="button"
-                title="Add row"
+                title={t.discoveryField.addRow}
                 onClick={() => onAddBlock?.(qid)}
                 className="p-1.5 rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
               >
@@ -183,7 +185,7 @@ export function DiscoveryQuestionField({
             {blockCount > 1 ? (
               <button
                 type="button"
-                title="Remove row"
+                title={t.discoveryField.removeRow}
                 onClick={() => onRemoveBlock?.(qid, blockIndex)}
                 className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
               >

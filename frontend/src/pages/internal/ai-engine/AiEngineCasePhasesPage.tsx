@@ -8,7 +8,9 @@ import { wealthApi, type CasePhaseAdminRow } from '../../../services/wealthApi';
 import { toApiError, type ApiError } from '../../../services/apiError';
 import { ErrorPopup } from '../../../components/ErrorPopup';
 import { SuccessToast } from '../../../components/SuccessToast';
+import { useT } from '../../../i18n';
 export function AiEngineCasePhasesPage() {
+  const t = useT();
   const [rows, setRows] = useState<CasePhaseAdminRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
@@ -58,7 +60,7 @@ export function AiEngineCasePhasesPage() {
     e.preventDefault();
     const so = Number(sortOrder);
     if (!phaseCode.trim() || !displayName.trim() || !Number.isFinite(so)) {
-      setError(toApiError(new Error('phaseCode, displayName, sortOrder are required.')));
+      setError(toApiError(new Error(t.aiCasePhases.errRequired)));
       return;
     }
     try {
@@ -69,7 +71,7 @@ export function AiEngineCasePhasesPage() {
           enabled,
           catalogVersion: catalogVersion.trim() || '1',
         });
-        setSuccessMessage(`Updated phase ${editingCode}.`);
+        setSuccessMessage(t.aiCasePhases.updatedToast.replace('{code}', editingCode));
       } else {
         await wealthApi.createAdminCasePhase({
           phaseCode: phaseCode.trim(),
@@ -78,7 +80,7 @@ export function AiEngineCasePhasesPage() {
           enabled,
           catalogVersion: catalogVersion.trim() || '1',
         });
-        setSuccessMessage(`Created phase ${phaseCode.trim()}.`);
+        setSuccessMessage(t.aiCasePhases.createdToast.replace('{code}', phaseCode.trim()));
       }
       resetForm();
       await load();
@@ -88,10 +90,10 @@ export function AiEngineCasePhasesPage() {
   };
 
   const handleDelete = async (code: string) => {
-    if (!window.confirm(`Delete case phase ${code}?`)) return;
+    if (!window.confirm(t.aiCasePhases.deleteConfirm.replace('{code}', code))) return;
     try {
       await wealthApi.deleteAdminCasePhase(code);
-      setSuccessMessage(`Deleted ${code}.`);
+      setSuccessMessage(t.aiCasePhases.deletedToast.replace('{code}', code));
       if (editingCode === code) resetForm();
       await load();
     } catch (err) {
@@ -105,7 +107,7 @@ export function AiEngineCasePhasesPage() {
       <SuccessToast message={successMessage} onClose={() => setSuccessMessage(null)} />
 
       <div>
-        <h2 className="text-xl font-semibold text-slate-900">Case phases</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t.aiCasePhases.title}</h2>
         <p className="text-sm text-slate-500 mt-1">
           CRUD <span className="font-mono text-slate-700">case_phase</span> (ADMIN). Changes refresh backend cache; restart AI-engine or reload
           catalog if needed.
@@ -160,22 +162,22 @@ export function AiEngineCasePhasesPage() {
             type="submit"
             className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-500"
           >
-            {editingCode ? 'Save' : 'Create'}
+            {editingCode ? t.aiCasePhases.save : t.aiCasePhases.createPhase}
           </button>
           {editingCode ? (
             <button type="button" onClick={() => resetForm()} className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold">
-              Cancel
+              {t.aiCasePhases.cancel}
             </button>
           ) : null}
         </div>
       </form>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="px-4 py-3 border-b border-slate-100 text-xs font-bold uppercase text-slate-400">All phases</div>
+        <div className="px-4 py-3 border-b border-slate-100 text-xs font-bold uppercase text-slate-400">{t.aiCasePhases.allPhases}</div>
         {loading ? (
-          <div className="p-8 text-sm text-slate-500">Loading…</div>
+          <div className="p-8 text-sm text-slate-500">{t.aiCasePhases.loading}</div>
         ) : rows.length === 0 ? (
-          <div className="p-8 text-sm text-slate-500">No rows.</div>
+          <div className="p-8 text-sm text-slate-500">{t.aiCasePhases.noRows}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -199,10 +201,10 @@ export function AiEngineCasePhasesPage() {
                     <td className="px-4 py-2 font-mono text-xs">{r.catalogVersion}</td>
                     <td className="px-4 py-2 text-right space-x-2">
                       <button type="button" onClick={() => startEdit(r)} className="text-indigo-600 text-xs font-bold">
-                        Edit
+                        {t.aiCasePhases.edit}
                       </button>
                       <button type="button" onClick={() => void handleDelete(r.phaseCode)} className="text-rose-600 text-xs font-bold">
-                        Delete
+                        {t.aiCasePhases.delete}
                       </button>
                     </td>
                   </tr>

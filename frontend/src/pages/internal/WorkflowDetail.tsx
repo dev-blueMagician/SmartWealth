@@ -7,6 +7,7 @@ import { ApiError, toApiError, type ApiError as ApiErrorShape } from '../../serv
 import { ErrorPopup } from '../../components/ErrorPopup';
 import { SuccessToast } from '../../components/SuccessToast';
 import { cn } from '../../lib/utils';
+import { useT } from '../../i18n';
 import {
   CUSTOM_QUEUE_SELECT_VALUE,
   WORKFLOW_QUEUE_STATE_ORDER,
@@ -31,6 +32,7 @@ export const WorkflowDetailPage = () => {
   const { workflowId = '' } = useParams();
   const [searchParams] = useSearchParams();
   const linkedCaseId = (searchParams.get('caseId') ?? '').trim();
+  const t = useT();
 
   const [error, setError] = useState<ApiErrorShape | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -163,7 +165,7 @@ export const WorkflowDetailPage = () => {
   }, [workflowId]);
 
   const internalTokenPreview = useMemo(
-    () => (internalToken ? `${internalToken.slice(0, 4)}...${internalToken.slice(-2)}` : 'Not set'),
+    () => (internalToken ? `${internalToken.slice(0, 4)}...${internalToken.slice(-2)}` : t.workflowDetail.notSet),
     [internalToken],
   );
 
@@ -171,7 +173,7 @@ export const WorkflowDetailPage = () => {
     try {
       localStorage.setItem(TOKEN_STORAGE_KEY, internalToken);
       setToastVariant('success');
-      setSuccessMessage('Internal token saved successfully.');
+      setSuccessMessage(t.workflowDetail.savedToken);
     } catch {
       // no-op: localStorage might be unavailable in restricted contexts.
     }
@@ -224,7 +226,7 @@ export const WorkflowDetailPage = () => {
 
   const handleRunWorkflow = async () => {
     if (!workflowId) return;
-    await runAction('run-workflow', () => workflowApi.runWorkflow(workflowId), 'Run workflow completed successfully.');
+    await runAction('run-workflow', () => workflowApi.runWorkflow(workflowId), t.workflowDetail.runDone);
     await loadCoreData();
   };
 
@@ -239,7 +241,7 @@ export const WorkflowDetailPage = () => {
           reviewer_id: reviewerId,
           note: reviewNote || undefined,
         }),
-      'Human approval submitted successfully.',
+      t.workflowDetail.approvalDone,
     );
     await loadCoreData();
   };
@@ -247,13 +249,13 @@ export const WorkflowDetailPage = () => {
   const handleProcessAiEvents = async () => {
     const limit = Number(processLimit);
     if (!Number.isFinite(limit) || limit <= 0) {
-      setError(new ApiError(400, 'VALIDATION_ERROR', 'Process limit must be a positive number.'));
+      setError(new ApiError(400, 'VALIDATION_ERROR', t.workflowDetail.errProcessLimit));
       return;
     }
     await runAction(
       'process-ai-events',
       () => workflowApi.processAiEvents(limit, internalToken),
-      'Process AI events completed successfully.',
+      t.workflowDetail.processDone,
     );
   };
 
@@ -265,7 +267,7 @@ export const WorkflowDetailPage = () => {
       .map((value) => value.trim())
       .filter(Boolean);
     if (states.length === 0) {
-      setError(new ApiError(400, 'VALIDATION_ERROR', 'to_states must contain at least one state.'));
+      setError(new ApiError(400, 'VALIDATION_ERROR', t.workflowDetail.errToStates));
       return;
     }
     await runAction(
@@ -288,9 +290,11 @@ export const WorkflowDetailPage = () => {
           ? row.skipped_duplicate_pending_events.length
           : 0;
         const wfShort = `${workflowId.slice(0, 8)}…`;
-        let msg = `Seed for ${wfShort}: ${seeded} event(s) inserted`;
+        let msg = t.workflowDetail.seedInserted
+          .replace('{wf}', wfShort)
+          .replace('{n}', String(seeded));
         if (skipped > 0) {
-          msg += ` · ${skipped} skipped (pending duplicate same workflow + from→to)`;
+          msg += t.workflowDetail.seedSkipped.replace('{n}', String(skipped));
         }
         msg += '.';
         return skipped > 0 ? { message: msg, variant: 'warning' as const } : msg;
@@ -303,14 +307,14 @@ export const WorkflowDetailPage = () => {
     const events = await runAction(
       'internal-audit',
       () => workflowApi.internalAudit(workflowId, internalToken),
-      'Internal audit loaded successfully.',
+      t.workflowDetail.internalAuditDone,
     );
     if (Array.isArray(events)) {
       setInternalAuditEvents(events as Record<string, unknown>[]);
     }
   };
 
-  if (!workflowId) return <div className="p-10 text-zinc-500">Missing workflow ID.</div>;
+  if (!workflowId) return <div className="p-10 text-zinc-500">{t.workflowDetail.missingWorkflowId}</div>;
 
   return (
     <div className="space-y-8">
@@ -331,17 +335,17 @@ export const WorkflowDetailPage = () => {
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-zinc-900"
           >
             <ChevronLeft className="w-4 h-4" />
-            Back to Workflow List
+            {t.workflowDetail.backToList}
           </Link>
-          <h1 className="text-3xl font-serif italic text-zinc-900">Workflow Management</h1>
+          <h1 className="text-3xl font-serif italic text-zinc-900">{t.workflowDetail.title}</h1>
           <p className="text-sm text-zinc-500 font-mono">{workflowId}</p>
           {linkedCaseId ? (
             <p className="text-xs text-zinc-500">
-              Linked case: <span className="font-mono text-zinc-700">{linkedCaseId}</span>
+              {t.workflowDetail.linkedCase} <span className="font-mono text-zinc-700">{linkedCaseId}</span>
               {linkedCasePhase ? (
                 <>
                   {' '}
-                  · phase <span className="font-semibold text-zinc-800">{linkedCasePhase}</span>
+                  · {t.workflowDetail.phaseWord} <span className="font-semibold text-zinc-800">{linkedCasePhase}</span>
                 </>
               ) : null}
             </p>
@@ -356,7 +360,7 @@ export const WorkflowDetailPage = () => {
           )}
         >
           <RefreshCw className={cn('w-4 h-4', loadingDetail && 'animate-spin')} />
-          Reload Data
+          {t.workflowDetail.reloadData}
         </button>
       </div>
 
@@ -368,7 +372,7 @@ export const WorkflowDetailPage = () => {
             activeFlowTab === 'business' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-50',
           )}
         >
-          Business Flow
+          {t.workflowDetail.businessFlow}
         </button>
         <button
           onClick={() => setActiveFlowTab('internal')}
@@ -377,7 +381,7 @@ export const WorkflowDetailPage = () => {
             activeFlowTab === 'internal' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-50',
           )}
         >
-          Internal Queue Flow
+          {t.workflowDetail.internalFlow}
         </button>
       </div>
 
@@ -386,7 +390,7 @@ export const WorkflowDetailPage = () => {
           <div className="xl:col-span-2 space-y-8">
             <section className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-serif italic text-zinc-900">Step 1: Run Workflow</h2>
+                <h2 className="text-lg font-serif italic text-zinc-900">{t.workflowDetail.step1}</h2>
                 <button
                   onClick={handleRunWorkflow}
                   disabled={runningAction !== null}
@@ -396,20 +400,20 @@ export const WorkflowDetailPage = () => {
                   )}
                 >
                   <Play className="w-4 h-4" />
-                  Run Workflow
+                  {t.workflowDetail.runWorkflow}
                 </button>
               </div>
               <pre className="max-h-72 overflow-auto text-xs font-mono bg-zinc-50 border border-zinc-100 rounded-2xl p-4">
-                {workflowData ? prettyJson(workflowData) : loadingDetail ? 'Loading workflow...' : 'No workflow data'}
+                {workflowData ? prettyJson(workflowData) : loadingDetail ? t.workflowDetail.loadingWorkflow : t.workflowDetail.noWorkflowData}
               </pre>
             </section>
 
             <section className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6 space-y-4">
-              <h2 className="text-lg font-serif italic text-zinc-900">Step 2: Human Approval (if required)</h2>
+              <h2 className="text-lg font-serif italic text-zinc-900">{t.workflowDetail.step2}</h2>
               <form className="space-y-4" onSubmit={handleHumanApproval}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <label className="space-y-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">Reviewer ID</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">{t.workflowDetail.reviewerId}</span>
                     <input
                       value={reviewerId}
                       onChange={(e) => setReviewerId(e.target.value)}
@@ -417,7 +421,7 @@ export const WorkflowDetailPage = () => {
                     />
                   </label>
                   <label className="space-y-2 md:col-span-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">Note</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">{t.workflowDetail.note}</span>
                     <input
                       value={reviewNote}
                       onChange={(e) => setReviewNote(e.target.value)}
@@ -433,7 +437,7 @@ export const WorkflowDetailPage = () => {
                       onChange={() => setApproved(true)}
                       className="accent-emerald-600"
                     />
-                    Approved
+                    {t.workflowDetail.approved}
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm text-zinc-600">
                     <input
@@ -442,7 +446,7 @@ export const WorkflowDetailPage = () => {
                       onChange={() => setApproved(false)}
                       className="accent-rose-600"
                     />
-                    Rejected
+                    {t.workflowDetail.rejected}
                   </label>
                 </div>
                 <button
@@ -454,13 +458,13 @@ export const WorkflowDetailPage = () => {
                   )}
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  Submit Human Approval
+                  {t.workflowDetail.submitApproval}
                 </button>
               </form>
             </section>
 
             <section className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6 space-y-4">
-              <h2 className="text-lg font-serif italic text-zinc-900">Step 3: Audit Events</h2>
+              <h2 className="text-lg font-serif italic text-zinc-900">{t.workflowDetail.step3}</h2>
               <pre className="max-h-80 overflow-auto text-xs font-mono bg-zinc-50 border border-zinc-100 rounded-2xl p-4">
                 {prettyJson(auditEvents)}
               </pre>
@@ -469,7 +473,7 @@ export const WorkflowDetailPage = () => {
 
           <div className="space-y-8">
             <section className="bg-zinc-900 text-white rounded-3xl border border-zinc-800 shadow-sm p-6 space-y-4">
-              <h2 className="text-lg font-serif italic">Latest Action Result</h2>
+              <h2 className="text-lg font-serif italic">{t.workflowDetail.latestResult}</h2>
               <pre className="max-h-60 overflow-auto text-xs font-mono bg-white/5 border border-white/10 rounded-2xl p-4">
                 {prettyJson(lastActionResult)}
               </pre>
@@ -482,16 +486,16 @@ export const WorkflowDetailPage = () => {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           <div className="xl:col-span-2 space-y-8">
             <section className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6 space-y-4">
-              <h2 className="text-lg font-serif italic text-zinc-900">Internal API Token</h2>
-              <p className="text-xs text-zinc-500">Preview: {internalTokenPreview}</p>
+              <h2 className="text-lg font-serif italic text-zinc-900">{t.workflowDetail.internalApiToken}</h2>
+              <p className="text-xs text-zinc-500">{t.workflowDetail.previewLabel.replace('{value}', internalTokenPreview)}</p>
               <label className="space-y-2 block">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                  X-Internal-Token (AI-engine)
+                  {t.workflowDetail.xInternalToken}
                 </span>
                 <input
                   value={internalToken}
                   onChange={(e) => setInternalToken(e.target.value)}
-                  placeholder="Matches AI-engine internal_workflow_event_token"
+                  placeholder={t.workflowDetail.tokenPlaceholder}
                   autoComplete="off"
                   className="w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
@@ -500,12 +504,12 @@ export const WorkflowDetailPage = () => {
                 onClick={persistToken}
                 className="w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-xs font-bold text-zinc-700 hover:bg-zinc-50"
               >
-                Save Token in Browser
+                {t.workflowDetail.saveToken}
               </button>
             </section>
 
             <section className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6 space-y-4">
-              <h2 className="text-lg font-serif italic text-zinc-900">Internal Workflow Actions</h2>
+              <h2 className="text-lg font-serif italic text-zinc-900">{t.workflowDetail.internalActions}</h2>
               <p className="text-[11px] text-zinc-500 leading-relaxed">
                 Uses workflow <span className="font-mono text-zinc-700">{workflowId.slice(0, 8)}…</span>. Seed skips
                 inserting an event when this workflow already has a <strong>pending</strong> row (
@@ -513,7 +517,7 @@ export const WorkflowDetailPage = () => {
                 <span className="font-mono">from_state → to_state</span> — avoids duplicate AI loop work.
               </p>
               <form className="space-y-3 pt-2" onSubmit={handleSeedFixtures}>
-                <p className="text-xs font-bold text-zinc-600">Step 1: Seed Fixtures</p>
+                <p className="text-xs font-bold text-zinc-600">{t.workflowDetail.seedStep1}</p>
                 <p className="text-[11px] text-zinc-500 leading-relaxed">
                   Phase và assessment lấy từ catalog AI-engine (<span className="font-mono text-zinc-700">GET /api/v1/case-phase-assessments</span>
                   , DB <span className="font-mono">case_phase</span> / <span className="font-mono">ai_interaction</span> khi đã seed).{' '}
@@ -526,7 +530,7 @@ export const WorkflowDetailPage = () => {
                 </p>
                 <label className="space-y-2 block">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                    Case phase (filter manifest)
+                    {t.workflowDetail.casePhaseFilter}
                   </span>
                   <select
                     value={selectedPhase}
@@ -543,7 +547,7 @@ export const WorkflowDetailPage = () => {
                 </label>
                 <label className="space-y-2 block">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                    Assessment (child spec code)
+                    {t.workflowDetail.assessmentChild}
                   </span>
                   <select
                     value={assessmentsForPhase.includes(assessmentCode) ? assessmentCode : ''}
@@ -552,7 +556,7 @@ export const WorkflowDetailPage = () => {
                     className="w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
                   >
                     {assessmentsForPhase.length === 0 ? (
-                      <option value="">No assessments for phase</option>
+                      <option value="">{t.workflowDetail.noAssessments}</option>
                     ) : (
                       assessmentsForPhase.map((code) => (
                         <option key={code} value={code}>
@@ -590,7 +594,7 @@ export const WorkflowDetailPage = () => {
                 ) : null}
                 <label className="space-y-2 block">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                    Target states (preset chain)
+                    {t.workflowDetail.targetStates}
                   </span>
                   <select
                     value={toStatesManualEntry ? CUSTOM_QUEUE_SELECT_VALUE : resolveToStatesSelectValue(toStates)}
@@ -610,7 +614,7 @@ export const WorkflowDetailPage = () => {
                         {p.label}
                       </option>
                     ))}
-                    <option value={CUSTOM_QUEUE_SELECT_VALUE}>Custom… (comma-separated)</option>
+                    <option value={CUSTOM_QUEUE_SELECT_VALUE}>{t.workflowDetail.customComma}</option>
                   </select>
                   {toStatesManualEntry ? (
                     <input
@@ -624,7 +628,7 @@ export const WorkflowDetailPage = () => {
                 </label>
                 <label className="space-y-2 block">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                    Start from state (first transition «from»)
+                    {t.workflowDetail.startFromState}
                   </span>
                   <select
                     value={startFromManualEntry ? CUSTOM_QUEUE_SELECT_VALUE : resolveStartFromSelectValue(startFromState)}
@@ -644,7 +648,7 @@ export const WorkflowDetailPage = () => {
                         {s}
                       </option>
                     ))}
-                    <option value={CUSTOM_QUEUE_SELECT_VALUE}>Custom…</option>
+                    <option value={CUSTOM_QUEUE_SELECT_VALUE}>{t.workflowDetail.custom}</option>
                   </select>
                   {startFromManualEntry ? (
                     <input
@@ -663,7 +667,7 @@ export const WorkflowDetailPage = () => {
                     onChange={(e) => setSeedEvents(e.target.checked)}
                     className="accent-zinc-900"
                   />
-                  Insert workflow_event rows (queue for process-ai-events)
+                  {t.workflowDetail.insertEvents}
                 </label>
                 <button
                   type="submit"
@@ -673,14 +677,14 @@ export const WorkflowDetailPage = () => {
                     runningAction ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-500',
                   )}
                 >
-                  Execute `seed-fixtures`
+                  {t.workflowDetail.execSeed}
                 </button>
               </form>
 
               <div className="pt-4 border-t border-zinc-100 space-y-3">
-                <p className="text-xs font-bold text-zinc-600">Step 2: Process AI Events</p>
+                <p className="text-xs font-bold text-zinc-600">{t.workflowDetail.seedStep2}</p>
                 <label className="space-y-2 block">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">Process Limit</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">{t.workflowDetail.processLimit}</span>
                   <input
                     value={processLimit}
                     onChange={(e) => setProcessLimit(e.target.value)}
@@ -696,12 +700,12 @@ export const WorkflowDetailPage = () => {
                   )}
                 >
                   <DatabaseZap className="w-4 h-4" />
-                  Run `process-ai-events`
+                  {t.workflowDetail.runProcess}
                 </button>
               </div>
 
               <div className="pt-4 border-t border-zinc-100">
-                <p className="text-xs font-bold text-zinc-600 mb-3">Step 3: Load Internal Audit</p>
+                <p className="text-xs font-bold text-zinc-600 mb-3">{t.workflowDetail.seedStep3}</p>
                 <button
                   onClick={handleLoadInternalAudit}
                   disabled={runningAction !== null}
@@ -711,7 +715,7 @@ export const WorkflowDetailPage = () => {
                   )}
                 >
                   <Activity className="w-4 h-4" />
-                  Load Internal Audit
+                  {t.workflowDetail.loadInternalAudit}
                 </button>
               </div>
             </section>
@@ -719,14 +723,14 @@ export const WorkflowDetailPage = () => {
 
           <div className="space-y-8">
             <section className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6 space-y-4">
-              <h2 className="text-lg font-serif italic text-zinc-900">Internal Audit (`/internal/workflow/audit`)</h2>
+              <h2 className="text-lg font-serif italic text-zinc-900">{t.workflowDetail.internalAuditTitle}</h2>
               <pre className="max-h-60 overflow-auto text-xs font-mono bg-zinc-50 border border-zinc-100 rounded-2xl p-4">
                 {prettyJson(internalAuditEvents)}
               </pre>
             </section>
 
             <section className="bg-zinc-900 text-white rounded-3xl border border-zinc-800 shadow-sm p-6 space-y-4">
-              <h2 className="text-lg font-serif italic">Latest Action Result</h2>
+              <h2 className="text-lg font-serif italic">{t.workflowDetail.latestResult}</h2>
               <pre className="max-h-60 overflow-auto text-xs font-mono bg-white/5 border border-white/10 rounded-2xl p-4">
                 {prettyJson(lastActionResult)}
               </pre>

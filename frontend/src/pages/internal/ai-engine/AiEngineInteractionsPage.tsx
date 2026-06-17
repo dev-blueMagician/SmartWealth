@@ -12,8 +12,10 @@ import {
 import { toApiError, type ApiError } from '../../../services/apiError';
 import { ErrorPopup } from '../../../components/ErrorPopup';
 import { SuccessToast } from '../../../components/SuccessToast';
+import { useT } from '../../../i18n';
 
 export function AiEngineInteractionsPage() {
+  const t = useT();
   const [phases, setPhases] = useState<CasePhaseAdminRow[]>([]);
   const [phaseFilter, setPhaseFilter] = useState('');
   const [rows, setRows] = useState<AiInteractionAdminRow[]>([]);
@@ -84,10 +86,10 @@ export function AiEngineInteractionsPage() {
     try {
       loopInput = JSON.parse(loopJson) as Record<string, unknown>;
       if (loopInput === null || typeof loopInput !== 'object' || Array.isArray(loopInput)) {
-        throw new Error('loop_input must be a JSON object.');
+        throw new Error(t.aiInteractions.errLoopObject);
       }
     } catch (err) {
-      setError(toApiError(err instanceof Error ? err : new Error('Invalid loop_input JSON.')));
+      setError(toApiError(err instanceof Error ? err : new Error(t.aiInteractions.errInvalidJson)));
       return;
     }
     if (!interactionId.trim() || !phaseCode.trim()) return;
@@ -98,7 +100,7 @@ export function AiEngineInteractionsPage() {
           loopInput,
           systemPrompt: systemPrompt.trim() || null,
         });
-        setSuccessMessage(`Updated ${editingId}.`);
+        setSuccessMessage(t.aiInteractions.updatedToast.replace('{id}', editingId));
       } else {
         await wealthApi.createAdminAiInteraction({
           interactionId: interactionId.trim(),
@@ -106,7 +108,7 @@ export function AiEngineInteractionsPage() {
           loopInput,
           systemPrompt: systemPrompt.trim() || null,
         });
-        setSuccessMessage(`Created ${interactionId.trim()}.`);
+        setSuccessMessage(t.aiInteractions.createdToast.replace('{id}', interactionId.trim()));
       }
       resetForm();
       await loadInteractions();
@@ -116,10 +118,10 @@ export function AiEngineInteractionsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(`Delete interaction ${id}?`)) return;
+    if (!window.confirm(t.aiInteractions.deleteConfirm.replace('{id}', id))) return;
     try {
       await wealthApi.deleteAdminAiInteraction(id);
-      setSuccessMessage(`Deleted ${id}.`);
+      setSuccessMessage(t.aiInteractions.deletedToast.replace('{id}', id));
       if (editingId === id) resetForm();
       await loadInteractions();
     } catch (err) {
@@ -133,7 +135,7 @@ export function AiEngineInteractionsPage() {
       <SuccessToast message={successMessage} onClose={() => setSuccessMessage(null)} />
 
       <div>
-        <h2 className="text-xl font-semibold text-slate-900">AI interactions</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t.aiInteractions.title}</h2>
         <p className="text-sm text-slate-500 mt-1">
           CRUD <span className="font-mono">ai_interaction</span> including <span className="font-mono">loop_input</span> (JSON) and{' '}
           <span className="font-mono">system_prompt</span>.
@@ -141,13 +143,13 @@ export function AiEngineInteractionsPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3">
-        <span className="text-[10px] font-bold uppercase text-slate-400">Filter by phase</span>
+        <span className="text-[10px] font-bold uppercase text-slate-400">{t.aiInteractions.filterByPhase}</span>
         <select
           value={phaseFilter}
           onChange={(e) => setPhaseFilter(e.target.value)}
           className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white font-mono"
         >
-          <option value="">All phases</option>
+          <option value="">{t.aiInteractions.allPhases}</option>
           {phases.map((p) => (
             <option key={p.phaseCode} value={p.phaseCode}>
               {p.phaseCode}
@@ -200,16 +202,16 @@ export function AiEngineInteractionsPage() {
             onChange={(e) => setSystemPrompt(e.target.value)}
             rows={4}
             className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"
-            placeholder="Optional system prompt for this interaction…"
+            placeholder={t.aiInteractions.systemPromptPlaceholder}
           />
         </label>
         <div className="flex gap-2">
           <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-500">
-            {editingId ? 'Save' : 'Create'}
+            {editingId ? t.aiInteractions.save : t.aiInteractions.createInteraction}
           </button>
           {editingId ? (
             <button type="button" onClick={() => resetForm()} className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold">
-              Cancel
+              {t.aiInteractions.cancel}
             </button>
           ) : null}
         </div>
@@ -218,9 +220,9 @@ export function AiEngineInteractionsPage() {
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <div className="px-4 py-3 border-b border-slate-100 text-xs font-bold uppercase text-slate-400">Rows</div>
         {loading ? (
-          <div className="p-8 text-sm text-slate-500">Loading…</div>
+          <div className="p-8 text-sm text-slate-500">{t.aiInteractions.loading}</div>
         ) : rows.length === 0 ? (
-          <div className="p-8 text-sm text-slate-500">No interactions.</div>
+          <div className="p-8 text-sm text-slate-500">{t.aiInteractions.noInteractions}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -242,10 +244,10 @@ export function AiEngineInteractionsPage() {
                     </td>
                     <td className="px-4 py-2 text-right space-x-2 whitespace-nowrap">
                       <button type="button" onClick={() => startEdit(r)} className="text-indigo-600 text-xs font-bold">
-                        Edit
+                        {t.aiInteractions.edit}
                       </button>
                       <button type="button" onClick={() => void handleDelete(r.interactionId)} className="text-rose-600 text-xs font-bold">
-                        Delete
+                        {t.aiInteractions.delete}
                       </button>
                     </td>
                   </tr>

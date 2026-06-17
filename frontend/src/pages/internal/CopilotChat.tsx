@@ -23,6 +23,7 @@ import {
 import Markdown from 'react-markdown';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../auth/AuthContext';
+import { useT } from '../../i18n';
 
 type Mode = 'AGENT' | 'PLANNER';
 
@@ -50,6 +51,7 @@ function shortDisplayName(username: string | undefined): string {
 
 export function CopilotChat() {
   const { auth } = useAuth();
+  const t = useT();
   const displayName = shortDisplayName(auth?.username);
   const initials = userInitials(auth?.username);
 
@@ -122,7 +124,7 @@ export function CopilotChat() {
                   mode === 'AGENT' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700',
                 )}
               >
-                <Bot className="w-3 h-3" /> Advice Agent
+                <Bot className="w-3 h-3" /> {t.copilot.adviceAgent}
               </button>
               <button
                 type="button"
@@ -132,7 +134,7 @@ export function CopilotChat() {
                   mode === 'PLANNER' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700',
                 )}
               >
-                <Target className="w-3 h-3" /> Strategy Planner
+                <Target className="w-3 h-3" /> {t.copilot.strategyPlanner}
               </button>
             </div>
           </div>
@@ -196,7 +198,7 @@ export function CopilotChat() {
                 <Cpu className="w-4 h-4 animate-spin" />
               </div>
               <div className="flex items-center gap-2 px-4 py-2 bg-zinc-50 border border-zinc-100 rounded-2xl italic text-xs text-zinc-400">
-                Nexus is generating a {mode.toLowerCase()} response...
+                {t.copilot.thinking.replace('{mode}', mode.toLowerCase())}
               </div>
             </div>
           )}
@@ -232,8 +234,8 @@ export function CopilotChat() {
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), void handleSend())}
                 placeholder={
                   mode === 'AGENT'
-                    ? 'Ask the Advice Agent anything about cases or clients...'
-                    : 'Describe your strategy goals to the Planner...'
+                    ? t.copilot.agentPlaceholder
+                    : t.copilot.plannerPlaceholder
                 }
                 className="w-full bg-transparent border-none outline-none p-3 text-sm text-zinc-900 placeholder:text-zinc-400 resize-none h-24"
               />
@@ -267,13 +269,13 @@ export function CopilotChat() {
                       : 'bg-zinc-100 text-zinc-400',
                   )}
                 >
-                  Send Command
+                  {t.copilot.sendCommand}
                   <Send className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
             <p className="text-[10px] text-zinc-400 text-center font-medium">
-              Nexus AI can make mistakes. Always verify strategy outputs with compliance.
+              {t.copilot.disclaimer}
             </p>
           </div>
         </div>
@@ -283,7 +285,7 @@ export function CopilotChat() {
         <section className="bg-zinc-900 rounded-3xl p-6 text-white border border-zinc-800 shadow-xl overflow-hidden relative group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl" />
           <h3 className="font-serif italic text-lg mb-6 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-blue-400" /> Active Context
+            <Zap className="w-5 h-5 text-blue-400" /> {t.copilot.activeContext}
           </h3>
           <div className="space-y-4">
             <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-3">
@@ -314,7 +316,7 @@ export function CopilotChat() {
 
         <section className="bg-white rounded-3xl border border-zinc-200 p-6 space-y-4">
           <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-tight flex items-center justify-between">
-            History
+            {t.copilot.history}
             <MoreHorizontal className="w-4 h-4 text-zinc-400" />
           </h3>
           <div className="space-y-3">

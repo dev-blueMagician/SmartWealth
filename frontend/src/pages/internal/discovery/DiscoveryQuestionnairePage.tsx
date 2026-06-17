@@ -30,9 +30,11 @@ import type {
 } from '../../../services/discoveryTypes';
 import { toApiError, type ApiError } from '../../../services/apiError';
 import { wealthApi } from '../../../services/wealthApi';
+import { useT } from '../../../i18n';
 
 export function DiscoveryQuestionnairePage() {
   const { caseId } = useParams<{ caseId: string }>();
+  const t = useT();
   const [questions, setQuestions] = useState<DiscoveryQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<AnswerKey, unknown>>({});
   const [blockCounts, setBlockCounts] = useState<Record<string, number>>({});
@@ -292,7 +294,7 @@ export function DiscoveryQuestionnairePage() {
       value = Number.isFinite(n) ? n : aiSuggestion;
     }
     handleChange(qid, blockIndex, value);
-    setSuccessMessage(`Applied suggestion to ${qid}.`);
+    setSuccessMessage(t.discoveryQuestionnaire.appliedSuggestion.replace('{qid}', qid));
   };
 
   const uniqueModules = useMemo(
@@ -305,7 +307,7 @@ export function DiscoveryQuestionnairePage() {
   );
 
   if (!caseId) {
-    return <p className="text-sm text-zinc-500">Missing case ID.</p>;
+    return <p className="text-sm text-zinc-500">{t.discoveryQuestionnaire.missingCaseId}</p>;
   }
 
   return (
@@ -319,18 +321,18 @@ export function DiscoveryQuestionnairePage() {
             to={`/internal/cases/${caseId}`}
             className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-500 mb-2"
           >
-            <ArrowLeft className="w-4 h-4" /> Back to case
+            <ArrowLeft className="w-4 h-4" /> {t.discoveryQuestionnaire.backToCase}
           </Link>
           <h2 className="text-2xl font-serif italic text-zinc-900 flex items-center gap-2">
             <ClipboardList className="w-7 h-7 text-indigo-600" />
-            Discovery questionnaire
+            {t.discoveryQuestionnaire.title}
           </h2>
           <p className="text-sm text-zinc-500 mt-1 font-mono">{caseLabel}</p>
         </div>
         <div className="min-w-[240px] space-y-3">
           <div className="space-y-2">
             <div className="flex justify-between text-[10px] font-bold uppercase text-zinc-500">
-              <span>Required questions</span>
+              <span>{t.discoveryQuestionnaire.requiredQuestions}</span>
               <span>
                 {progress.completed}/{progress.total} ({progress.percent}%)
               </span>
@@ -346,7 +348,7 @@ export function DiscoveryQuestionnairePage() {
           {fieldStats ? (
             <div className="space-y-2">
               <div className="flex justify-between text-[10px] font-bold uppercase text-zinc-500">
-                <span>Mandatory fields (dictionary)</span>
+                <span>{t.discoveryQuestionnaire.mandatoryFields}</span>
                 <span>
                   {fieldStats.mandatoryFieldsFilled}/{fieldStats.mandatoryFieldsTotal} (
                   {fieldMandatoryPercent}%)
@@ -360,8 +362,7 @@ export function DiscoveryQuestionnairePage() {
                 />
               </div>
               <p className="text-[10px] text-zinc-500">
-                {fieldStats.mandatoryFieldsMissing.toLocaleString()} mandatory fields still missing
-                in catalog projection
+                {t.discoveryQuestionnaire.mandatoryFieldsMissing.replace('{count}', fieldStats.mandatoryFieldsMissing.toLocaleString())}
               </p>
             </div>
           ) : null}
@@ -372,7 +373,7 @@ export function DiscoveryQuestionnairePage() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border border-zinc-200 rounded-lg hover:bg-zinc-50 disabled:opacity-50"
           >
             <RefreshCw className={`w-3 h-3 ${rebuilding ? 'animate-spin' : ''}`} />
-            {rebuilding ? 'Rebuilding…' : 'Rebuild field dataset'}
+            {rebuilding ? t.discoveryQuestionnaire.rebuilding : t.discoveryQuestionnaire.rebuildDataset}
           </button>
         </div>
       </div>
@@ -384,13 +385,16 @@ export function DiscoveryQuestionnairePage() {
             onClick={() => setSummaryExpanded((v) => !v)}
             className="font-bold text-indigo-700 hover:text-indigo-600"
           >
-            {summaryExpanded ? 'Hide' : 'Show'} LLM-safe discovery summary ({discoverySummary.stats.filledCount}{' '}
-            filled / {discoverySummary.filledFields.length} shown)
+            {summaryExpanded ? t.discoveryQuestionnaire.summaryHide : t.discoveryQuestionnaire.summaryShow}{' '}
+            {t.discoveryQuestionnaire.summaryTitle}{' '}
+            {t.discoveryQuestionnaire.summaryCounts
+              .replace('{filled}', String(discoverySummary.stats.filledCount))
+              .replace('{shown}', String(discoverySummary.filledFields.length))}
           </button>
           {summaryExpanded ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto">
               <div>
-                <p className="font-bold uppercase text-[10px] text-zinc-500 mb-1">Filled (sample)</p>
+                <p className="font-bold uppercase text-[10px] text-zinc-500 mb-1">{t.discoveryQuestionnaire.filledSample}</p>
                 <ul className="space-y-0.5 font-mono text-[10px]">
                   {discoverySummary.filledFields.map((f) => (
                     <li key={f.systemField}>
@@ -400,14 +404,14 @@ export function DiscoveryQuestionnairePage() {
                 </ul>
               </div>
               <div>
-                <p className="font-bold uppercase text-[10px] text-zinc-500 mb-1">Unmapped</p>
+                <p className="font-bold uppercase text-[10px] text-zinc-500 mb-1">{t.discoveryQuestionnaire.unmapped}</p>
                 <ul className="space-y-0.5 font-mono text-[10px]">
                   {discoverySummary.unmappedAnswers.length === 0 ? (
-                    <li>None</li>
+                    <li>{t.discoveryQuestionnaire.none}</li>
                   ) : (
                     discoverySummary.unmappedAnswers.map((u) => (
                       <li key={`${u.questionId}:${u.blockIndex}`}>
-                        {u.questionId} → {u.mappingSystemField ?? 'no mapping'}
+                        {u.questionId} → {u.mappingSystemField ?? t.discoveryQuestionnaire.noMapping}
                       </li>
                     ))
                   )}
@@ -425,7 +429,7 @@ export function DiscoveryQuestionnairePage() {
           onChange={(e) => setModuleFilter(e.target.value)}
           className="px-3 py-2 border border-zinc-200 rounded-xl text-sm bg-white"
         >
-          <option value="">All modules</option>
+          <option value="">{t.discoveryQuestionnaire.allModules}</option>
           {uniqueModules.map((m) => (
             <option key={m} value={m}>
               {m}
@@ -437,7 +441,7 @@ export function DiscoveryQuestionnairePage() {
           onChange={(e) => setSectionFilter(e.target.value)}
           className="px-3 py-2 border border-zinc-200 rounded-xl text-sm bg-white"
         >
-          <option value="">All sections</option>
+          <option value="">{t.discoveryQuestionnaire.allSections}</option>
           {uniqueSections.map((s) => (
             <option key={s} value={s}>
               {s}
@@ -449,15 +453,15 @@ export function DiscoveryQuestionnairePage() {
           onClick={() => void loadData()}
           className="px-3 py-2 text-xs font-bold rounded-xl border border-zinc-200 hover:bg-zinc-50"
         >
-          Apply filters
+          {t.discoveryQuestionnaire.applyFilters}
         </button>
       </div>
 
       {loading ? (
-        <p className="text-sm text-zinc-500">Loading questionnaire…</p>
+        <p className="text-sm text-zinc-500">{t.discoveryQuestionnaire.loading}</p>
       ) : questions.length === 0 ? (
         <div className="bg-white rounded-2xl border border-zinc-200 p-10 text-center text-sm text-zinc-500">
-          No questions defined. Add questions via admin API or seed data.
+          {t.discoveryQuestionnaire.noQuestions}
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">

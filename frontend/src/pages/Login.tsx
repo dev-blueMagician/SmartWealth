@@ -9,9 +9,11 @@ import { motion } from 'motion/react';
 import { useAuth } from '../auth/AuthContext';
 import { toApiError, type ApiError } from '../services/apiError';
 import { ErrorPopup } from '../components/ErrorPopup';
+import { useT } from '../i18n';
 
 export function LoginPage() {
   const { auth, login } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const location = useLocation();
   const [username, setUsername] = useState('');
@@ -52,11 +54,11 @@ export function LoginPage() {
       >
         <div className="text-center space-y-2 mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-white">Nexus WM</h1>
-          <p className="text-sm text-slate-400">Staff portal — sign in to continue</p>
+          <p className="text-sm text-slate-400">{t.login.subtitle}</p>
         </div>
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
           <label className="block space-y-1.5">
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Username</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">{t.login.username}</span>
             <input
               type="text"
               autoComplete="username"
@@ -67,7 +69,7 @@ export function LoginPage() {
             />
           </label>
           <label className="block space-y-1.5">
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Password</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">{t.login.password}</span>
             <input
               type="password"
               autoComplete="current-password"
@@ -82,13 +84,13 @@ export function LoginPage() {
             disabled={submitting}
             className="w-full py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {submitting ? 'Signing in…' : 'Sign in'}
+            {submitting ? t.login.signingIn : t.login.signIn}
           </button>
         </form>
         <p className="mt-8 text-center text-xs text-slate-500">
-          Client companion demo (no staff login):{' '}
+          {t.login.mobileLink}{' '}
           <Link to="/mobile" className="text-indigo-400 hover:text-indigo-300 font-medium">
-            Open mobile preview
+            {t.login.openMobilePreview}
           </Link>
         </p>
       </motion.div>

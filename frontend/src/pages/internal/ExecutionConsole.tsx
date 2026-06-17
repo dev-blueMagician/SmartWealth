@@ -16,6 +16,7 @@ import { wealthApi, type ExecutionInstructionSummary, type FinancialPlanSummary,
 import { toApiError, type ApiError } from '../../services/apiError';
 import { ErrorPopup } from '../../components/ErrorPopup';
 import { SuccessToast } from '../../components/SuccessToast';
+import { useT } from '../../i18n';
 
 const INSTRUCTION_DRAFT = 'DRAFT';
 
@@ -23,6 +24,7 @@ export const ExecutionConsolePage = () => {
   const { portalCaps } = useAuth();
   const { caseId } = useParams();
   const navigate = useNavigate();
+  const t = useT();
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [recommendationId, setRecommendationId] = useState('');
@@ -130,7 +132,7 @@ export const ExecutionConsolePage = () => {
       const rows = await wealthApi.listClientExecutionInstructions(clientId);
       setExecutionRows(rows);
       if (showToast) {
-        setSuccessMessage('Execution instructions refreshed.');
+        setSuccessMessage(t.executionConsole.refreshedToast);
       }
     } catch (err) {
       setError(toApiError(err));
@@ -169,7 +171,7 @@ export const ExecutionConsolePage = () => {
 
   const handleExecute = async () => {
     if (!recommendationId.trim()) {
-      setError(toApiError(new Error('Recommendation ID is required — pick a plan and recommendation above.')));
+      setError(toApiError(new Error(t.executionConsole.errRecommendationId)));
       return;
     }
     setLoading(true);
@@ -178,16 +180,16 @@ export const ExecutionConsolePage = () => {
         channel: 'trade-execution-console',
       });
       if (!createdId) {
-        throw new Error('Execution instruction ID missing from backend response.');
+        throw new Error(t.executionConsole.errInstructionIdMissing);
       }
       setInstructionId(createdId);
       setInstructionStatus(INSTRUCTION_DRAFT);
       setActivitySummary({
-        title: 'Instruction drafted',
-        detail: 'Review and send when ready. It stays in draft until you confirm.',
+        title: t.executionConsole.draftedTitle,
+        detail: t.executionConsole.draftedDetail,
         status: INSTRUCTION_DRAFT,
       });
-      setSuccessMessage('Execution instruction created successfully.');
+      setSuccessMessage(t.executionConsole.createdToast);
       await loadExecutionRows(false);
     } catch (err) {
       setError(toApiError(err));
@@ -198,11 +200,11 @@ export const ExecutionConsolePage = () => {
 
   const handleSendInstruction = async () => {
     if (!instructionId) {
-      setError(toApiError(new Error('Select a draft instruction in the list before sending.')));
+      setError(toApiError(new Error(t.executionConsole.errSelectDraft)));
       return;
     }
     if (instructionStatus !== INSTRUCTION_DRAFT) {
-      setError(toApiError(new Error('Only DRAFT instructions can be sent — pick a draft row below.')));
+      setError(toApiError(new Error(t.executionConsole.errOnlyDraft)));
       return;
     }
     setSending(true);
@@ -210,11 +212,11 @@ export const ExecutionConsolePage = () => {
       const response = await wealthApi.sendExecutionInstruction(instructionId);
       setInstructionStatus(response.status ?? 'SENT');
       setActivitySummary({
-        title: 'Instruction sent',
-        detail: 'The instruction has been released for execution.',
+        title: t.executionConsole.sentTitle,
+        detail: t.executionConsole.sentDetail,
         status: response.status ?? 'SENT',
       });
-      setSuccessMessage('Execution instruction sent successfully.');
+      setSuccessMessage(t.executionConsole.sentToast);
       await loadExecutionRows(false);
     } catch (err) {
       setError(toApiError(err));
@@ -235,9 +237,9 @@ export const ExecutionConsolePage = () => {
             onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 text-zinc-400 hover:text-zinc-900 transition-colors text-[10px] font-bold uppercase tracking-widest mb-2"
           >
-            <ChevronLeft className="w-4 h-4" /> Back to Case Detail
+            <ChevronLeft className="w-4 h-4" /> {t.executionConsole.backToCase}
           </button>
-          <h1 className="text-3xl font-serif italic text-zinc-900">Trade Execution Protocol</h1>
+          <h1 className="text-3xl font-serif italic text-zinc-900">{t.executionConsole.title}</h1>
           <p className="text-zinc-500 text-sm">
             Case <span className="text-zinc-800 font-medium tabular-nums">{caseId?.slice(0, 8) ?? '—'}…</span>
             {clientId && (
@@ -258,7 +260,7 @@ export const ExecutionConsolePage = () => {
             )}
           >
             <RefreshCw className={cn('w-4 h-4', loadingExecutions && 'animate-spin')} />
-            Refresh executions
+            {t.executionConsole.refreshExecutions}
           </button>
           {portalCaps.canCreateExecutionInstruction && (
           <button
@@ -270,7 +272,7 @@ export const ExecutionConsolePage = () => {
             )}
           >
             {loading ? <Clock className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            Create instruction
+            {t.executionConsole.createInstruction}
           </button>
           )}
           {portalCaps.canSendExecutionInstruction && (
@@ -288,7 +290,7 @@ export const ExecutionConsolePage = () => {
             )}
           >
             {sending ? <Clock className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-            Send instruction
+            {t.executionConsole.sendInstruction}
           </button>
           )}
         </div>
@@ -302,9 +304,9 @@ export const ExecutionConsolePage = () => {
                 <Layers className="w-6 h-6 text-indigo-600" />
               </div>
               <div>
-                <h2 className="text-lg font-serif italic text-zinc-900">Plan & recommendation</h2>
+                <h2 className="text-lg font-serif italic text-zinc-900">{t.executionConsole.planRecommendation}</h2>
                 <p className="text-xs text-zinc-500">
-                  Choose the financial plan version, then the recommendation used for execution.
+                  {t.executionConsole.planRecommendationDesc}
                 </p>
               </div>
             </div>
@@ -316,14 +318,14 @@ export const ExecutionConsolePage = () => {
               <>
                 <label className="block space-y-2">
                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">
-                    Financial plan (client)
+                    {t.executionConsole.financialPlan}
                   </span>
                   <select
                     value={selectedPlanId}
                     onChange={(e) => setSelectedPlanId(e.target.value)}
                     className="w-full px-4 py-3 border border-zinc-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                   >
-                    {plans.length === 0 && <option value="">No plans — create draft in Planning workspace</option>}
+                    {plans.length === 0 && <option value="">{t.executionConsole.noPlans}</option>}
                     {plans.map((p) => (
                       <option key={p.id} value={p.id}>
                         {(p.id ?? '').slice(0, 8)}… · {p.status ?? '?'} · v{p.versionNo ?? '?'}
@@ -349,9 +351,9 @@ export const ExecutionConsolePage = () => {
                     disabled={loadingRecs || !selectedPlanId}
                     className="w-full px-4 py-3 border border-zinc-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
                   >
-                    {loadingRecs && <option value="">Loading…</option>}
+                    {loadingRecs && <option value="">{t.executionConsole.loadingRecs}</option>}
                     {!loadingRecs && recommendations.length === 0 && (
-                      <option value="">No recommendations — create one under the plan</option>
+                      <option value="">{t.executionConsole.noRecs}</option>
                     )}
                     {!loadingRecs &&
                       recommendations.map((r) => (
@@ -395,14 +397,13 @@ export const ExecutionConsolePage = () => {
 
         <div className="space-y-8">
           <section className="bg-white rounded-3xl border border-zinc-200 p-8 shadow-sm">
-            <h3 className="font-serif italic text-lg mb-4">Instructions for this client</h3>
+            <h3 className="font-serif italic text-lg mb-4">{t.executionConsole.instructionsForClient}</h3>
             <p className="text-[11px] text-zinc-500 mb-3">
-              Select one row — <span className="font-semibold text-zinc-700">Send instruction</span> applies only to DRAFT
-              rows.
+              {t.executionConsole.selectRowHint}
             </p>
             <div className="space-y-2 max-h-64 overflow-auto text-xs">
               {sortedExecutionRows.length === 0 ? (
-                <p className="text-zinc-400">None yet.</p>
+                <p className="text-zinc-400">{t.executionConsole.noneYet}</p>
               ) : (
                 sortedExecutionRows.map((row, idx) => {
                   const rid = row.id ?? '';
@@ -453,7 +454,7 @@ export const ExecutionConsolePage = () => {
           </section>
 
           <section className="bg-white rounded-3xl border border-zinc-200 p-8 shadow-sm">
-            <h3 className="font-serif italic text-lg mb-4">Last step</h3>
+            <h3 className="font-serif italic text-lg mb-4">{t.executionConsole.lastStep}</h3>
             {activitySummary ? (
               <div className="space-y-3">
                 <p className="text-base font-medium text-zinc-900">{activitySummary.title}</p>
@@ -465,10 +466,10 @@ export const ExecutionConsolePage = () => {
                 )}
               </div>
             ) : (
-              <p className="text-sm text-zinc-400">Create or send an instruction to see a short summary here.</p>
+              <p className="text-sm text-zinc-400">{t.executionConsole.noActivity}</p>
             )}
             <div className="mt-6 pt-6 border-t border-zinc-100">
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Selected for send</p>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{t.executionConsole.selectedForSend}</p>
               <p className="text-sm font-medium text-zinc-900 mt-1 tabular-nums break-all">
                 {instructionId ? `${instructionId.slice(0, 8)}…` : '—'}
               </p>

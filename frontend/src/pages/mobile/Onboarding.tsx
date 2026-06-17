@@ -13,10 +13,12 @@ import { ErrorPopup } from '../../components/ErrorPopup';
 import { SuccessToast } from '../../components/SuccessToast';
 import { getAccessToken } from '../../auth/session';
 import { getMobileClientId, setMobileClientId } from '../../lib/mobileClientSession';
+import { useT } from '../../i18n';
 
 type Step = 'PROFILE' | 'ASSETS' | 'GOALS' | 'RISK' | 'SUCCESS';
 
 export const MobileOnboardingPage = () => {
+  const t = useT();
   const [step, setStep] = useState<Step>('PROFILE');
   const [progress, setProgress] = useState(25);
   const [submitting, setSubmitting] = useState(false);
@@ -123,17 +125,17 @@ export const MobileOnboardingPage = () => {
 
   const submitOnboarding = async () => {
     if (!selectedClientId) {
-      setError(toApiError(new Error('Please select a client first.')));
+      setError(toApiError(new Error(t.mobileOnboarding.errorSelectClient)));
       return;
     }
     const parsedAssetValue = Number(assetValue);
     const parsedGoalTargetAmount = Number(goalTargetAmount);
     if (!Number.isFinite(parsedAssetValue) || parsedAssetValue <= 0) {
-      setError(toApiError(new Error('Asset value must be a positive number.')));
+      setError(toApiError(new Error(t.mobileOnboarding.errorAssetValue)));
       return;
     }
     if (!Number.isFinite(parsedGoalTargetAmount) || parsedGoalTargetAmount <= 0) {
-      setError(toApiError(new Error('Goal target amount must be a positive number.')));
+      setError(toApiError(new Error(t.mobileOnboarding.errorGoalAmount)));
       return;
     }
 
@@ -161,7 +163,7 @@ export const MobileOnboardingPage = () => {
         await wealthApi.checkDiscovery(selectedCaseId);
       }
 
-      setSuccessMessage('Onboarding submitted successfully. Case is now ready for planning.');
+      setSuccessMessage(t.mobileOnboarding.successMessage);
       setStep('SUCCESS');
       setProgress(100);
     } catch (err) {
@@ -196,29 +198,35 @@ export const MobileOnboardingPage = () => {
       {step !== 'SUCCESS' && (
         <div className="px-1 mb-8">
           <div className="space-y-2 mb-5">
-            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Client</label>
+            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.mobileOnboarding.clientLabel}</label>
             <select
               value={selectedClientId}
               onChange={(e) => setSelectedClientId(e.target.value)}
               className="w-full px-5 py-3 bg-white border border-zinc-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500/10 outline-none transition-all appearance-none"
             >
-              {clientOptions.length === 0 && <option value="">No client available</option>}
+              {clientOptions.length === 0 && <option value="">{t.mobileOnboarding.noClientAvailable}</option>}
               {clientOptions.map((item) => (
                 <option key={item.clientId} value={item.clientId}>
                   {item.clientName ?? item.clientId}
                 </option>
               ))}
             </select>
-            <p className="text-[10px] font-mono text-zinc-400">Case: {selectedCaseId || 'No case linked'}</p>
+            <p className="text-[10px] font-mono text-zinc-400">
+              {selectedCaseId
+                ? t.mobileOnboarding.caseLinked.replace('{id}', selectedCaseId)
+                : t.mobileOnboarding.noCase}
+            </p>
           </div>
           <div className="flex justify-between items-end mb-4">
             <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">
-              {step === 'PROFILE' && 'Basic Profiling'}
-              {step === 'ASSETS' && 'Asset Declaration'}
-              {step === 'GOALS' && 'Future Objectives'}
-              {step === 'RISK' && 'Risk Tolerance'}
+              {step === 'PROFILE' && t.mobileOnboarding.stepProfile}
+              {step === 'ASSETS' && t.mobileOnboarding.stepAssets}
+              {step === 'GOALS' && t.mobileOnboarding.stepGoals}
+              {step === 'RISK' && t.mobileOnboarding.stepRisk}
             </h2>
-            <p className="text-xs font-bold text-zinc-400 font-mono">{progress}% Complete</p>
+            <p className="text-xs font-bold text-zinc-400 font-mono">
+              {t.mobileOnboarding.progressComplete.replace('{pct}', String(progress))}
+            </p>
           </div>
           <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
             <motion.div 
@@ -245,34 +253,34 @@ export const MobileOnboardingPage = () => {
                     <User className="w-6 h-6" />
                  </div>
                  <p className="text-sm font-medium text-zinc-600 leading-relaxed italic pr-4">
-                    "We'll start by gathering your personal details to personalize your financial advice."
+                    "{t.mobileOnboarding.quoteProfile}"
                  </p>
               </div>
               <div className="space-y-4">
                 <div className="space-y-2">
-                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Legal Full Name</label>
+                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.mobileOnboarding.legalFullName}</label>
                    <input
                      type="text"
                      value={profileName}
                      onChange={(e) => setProfileName(e.target.value)}
-                     placeholder="Sara Anderson"
+                     placeholder={t.mobileOnboarding.namePlaceholder}
                      className="w-full px-5 py-4 bg-white border border-zinc-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500/10 outline-none transition-all"
                    />
                 </div>
                 <div className="space-y-2">
-                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Residency</label>
+                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.mobileOnboarding.residency}</label>
                    <select
                      value={residency}
                      onChange={(e) => setResidency(e.target.value)}
                      className="w-full px-5 py-4 bg-white border border-zinc-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500/10 outline-none transition-all appearance-none"
                    >
-                      <option value="VN">Vietnam</option>
-                      <option value="SG">Singapore</option>
-                      <option value="US">United States</option>
+                      <option value="VN">{t.mobileOnboarding.residencyVN}</option>
+                      <option value="SG">{t.mobileOnboarding.residencySG}</option>
+                      <option value="US">{t.mobileOnboarding.residencyUS}</option>
                    </select>
                 </div>
                 <div className="space-y-2 col-span-2">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Device ID</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.mobileOnboarding.deviceId}</label>
                   <input
                     type="text"
                     value={deviceId}
@@ -291,11 +299,11 @@ export const MobileOnboardingPage = () => {
                     <Briefcase className="w-6 h-6" />
                  </div>
                  <p className="text-sm font-medium text-zinc-600 leading-relaxed italic pr-4">
-                    "List your current holdings to help us calculate your net worth and asset drift."
+                    "{t.mobileOnboarding.quoteAssets}"
                  </p>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Asset type</label>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.mobileOnboarding.assetType}</label>
                 <select
                   value={assetType}
                   onChange={(e) => setAssetType(e.target.value)}
@@ -309,7 +317,7 @@ export const MobileOnboardingPage = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Asset value</label>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.mobileOnboarding.assetValue}</label>
                 <input
                   type="number"
                   value={assetValue}
@@ -327,11 +335,11 @@ export const MobileOnboardingPage = () => {
                     <Target className="w-6 h-6" />
                  </div>
                  <p className="text-sm font-medium text-zinc-600 leading-relaxed italic pr-4">
-                    "Capture your objective so we can align advice with measurable targets."
+                    "{t.mobileOnboarding.quoteGoals}"
                  </p>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Goal type</label>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.mobileOnboarding.goalType}</label>
                 <select
                   value={goalType}
                   onChange={(e) => setGoalType(e.target.value)}
@@ -345,7 +353,7 @@ export const MobileOnboardingPage = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Target amount</label>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.mobileOnboarding.targetAmount}</label>
                 <input
                   type="number"
                   value={goalTargetAmount}
@@ -363,11 +371,11 @@ export const MobileOnboardingPage = () => {
                     <ShieldCheck className="w-6 h-6" />
                  </div>
                  <p className="text-sm font-medium text-zinc-600 leading-relaxed italic pr-4">
-                    "Choose your risk profile. We will submit onboarding and run discovery readiness."
+                    "{t.mobileOnboarding.quoteRisk}"
                  </p>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Risk Profile</label>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{t.mobileOnboarding.riskProfile}</label>
                 <select
                   value={riskProfile}
                   onChange={(e) => setRiskProfile(e.target.value)}
@@ -384,24 +392,24 @@ export const MobileOnboardingPage = () => {
 
           {step === 'SUCCESS' && (
             <div className="flex flex-col items-center justify-center py-20 text-center space-y-8">
-               <motion.div 
-                 initial={{ scale: 0 }} 
-                 animate={{ scale: 1 }} 
+               <motion.div
+                 initial={{ scale: 0 }}
+                 animate={{ scale: 1 }}
                  className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center"
                >
                  <CheckCircle2 className="w-12 h-12" />
                </motion.div>
                <div className="space-y-2">
-                 <h2 className="text-2xl font-bold text-zinc-900">Success!</h2>
+                 <h2 className="text-2xl font-bold text-zinc-900">{t.mobileOnboarding.successTitle}</h2>
                  <p className="text-zinc-500 text-sm max-w-[240px] leading-relaxed">
-                   Your profile has been submitted for professional review. We'll notify you once AI discovery is complete.
+                   {t.mobileOnboarding.successMessage}
                  </p>
                </div>
-               <button 
+               <button
                  onClick={() => navigate('/mobile')}
                  className="w-full max-w-[200px] py-4 bg-zinc-900 text-white rounded-2xl font-bold hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-900/10"
                >
-                 Back to Dashboard
+                 {t.mobileOnboarding.backToDashboard}
                </button>
             </div>
           )}
@@ -424,7 +432,7 @@ export const MobileOnboardingPage = () => {
             disabled={submitting}
             className="flex-1 h-16 bg-zinc-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 active:bg-zinc-800 transition-colors shadow-lg shadow-zinc-900/10"
           >
-            {submitting ? 'Submitting...' : 'Continue'}
+            {submitting ? t.mobileOnboarding.submitting : t.mobileOnboarding.continue}
             <ChevronRight className="w-5 h-5 opacity-50" />
           </button>
         </div>

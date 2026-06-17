@@ -12,8 +12,10 @@ import {
 import { toApiError, type ApiError } from '../services/apiError';
 import { ErrorPopup } from './ErrorPopup';
 import { SuccessToast } from './SuccessToast';
+import { useT } from '../i18n';
 
 export const AdvicePreview = () => {
+  const t = useT();
   const navigate = useNavigate();
   const [clients, setClients] = useState<WorkflowCreateClientOption[]>([]);
   const [selectedClientId, setSelectedClientId] = useState('');
@@ -112,7 +114,7 @@ export const AdvicePreview = () => {
 
   const submitDecision = async (decision: 'APPROVED' | 'REJECTED') => {
     if (!selectedRecommendationId) {
-      setError(toApiError(new Error('Select a recommendation first.')));
+      setError(toApiError(new Error(t.advice.errSelectRec)));
       return;
     }
     setSubmittingDecision(true);
@@ -122,7 +124,7 @@ export const AdvicePreview = () => {
         navigate('/mobile', { replace: true, state: { adviceApproved: true } });
         return;
       }
-      setSuccessMessage(`Decision submitted: ${decision}`);
+      setSuccessMessage(t.advice.decisionSubmitted.replace('{decision}', decision));
     } catch (err) {
       setError(toApiError(err));
     } finally {
@@ -137,12 +139,12 @@ export const AdvicePreview = () => {
 
       <div className="flex items-center gap-2 px-1">
         <Zap className="w-5 h-5 text-indigo-600" />
-        <h2 className="text-2xl font-bold text-slate-900 leading-tight">New Advice</h2>
+        <h2 className="text-2xl font-bold text-slate-900 leading-tight">{t.advice.title}</h2>
       </div>
 
       <div className="space-y-3 px-1">
         <label className="block space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Client</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">{t.advice.client}</span>
           <div className="relative">
             <select
               value={selectedClientId}
@@ -151,7 +153,7 @@ export const AdvicePreview = () => {
               className="w-full appearance-none pl-4 pr-10 py-3 border border-slate-200 rounded-2xl text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-500/20"
             >
               {clients.length === 0 && !loadingClients && (
-                <option value="">No clients — create a case in RM portal first</option>
+                <option value="">{t.advice.noClients}</option>
               )}
               {clients.map((c) => (
                 <option key={c.clientId} value={c.clientId}>
@@ -164,7 +166,7 @@ export const AdvicePreview = () => {
         </label>
 
         <label className="block space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Financial plan</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">{t.advice.financialPlan}</span>
           <div className="relative">
             <select
               value={selectedPlanId}
@@ -173,7 +175,7 @@ export const AdvicePreview = () => {
               className="w-full appearance-none pl-4 pr-10 py-3 border border-slate-200 rounded-2xl text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
             >
               {plans.length === 0 && !loadingPlans && (
-                <option value="">No plans yet — complete WM planning first</option>
+                <option value="">{t.advice.noPlans}</option>
               )}
               {plans.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -189,14 +191,14 @@ export const AdvicePreview = () => {
 
       <div className="bg-slate-50 p-2 rounded-[2.5rem] border border-slate-100">
         <div className="bg-white p-5 rounded-[2rem] shadow-sm space-y-4">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Recommendations</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t.advice.recommendations}</p>
           {loadingRecs ? (
             <div className="space-y-3 animate-pulse">
               <div className="h-16 bg-slate-100 rounded-2xl" />
               <div className="h-16 bg-slate-100 rounded-2xl" />
             </div>
           ) : recommendations.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-6">No recommendations for this plan.</p>
+            <p className="text-sm text-slate-400 text-center py-6">{t.advice.noRecommendations}</p>
           ) : (
             <ul className="space-y-2 max-h-64 overflow-y-auto pr-1">
               {recommendations.map((rec) => {
@@ -236,7 +238,7 @@ export const AdvicePreview = () => {
               animate={{ opacity: 1, y: 0 }}
               className="pt-2 border-t border-slate-100 space-y-2"
             >
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Selected</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{t.advice.selected}</p>
               <p className="text-sm text-slate-700 leading-relaxed">{selectedRecommendation.summary}</p>
             </motion.div>
           )}
@@ -252,7 +254,7 @@ export const AdvicePreview = () => {
                   : 'hover:bg-indigo-700',
               )}
             >
-              <CheckCircle2 className="w-4 h-4" /> Approve
+              <CheckCircle2 className="w-4 h-4" /> {t.advice.approve}
             </button>
             <button
               onClick={() => void submitDecision('REJECTED')}
@@ -273,7 +275,7 @@ export const AdvicePreview = () => {
       <div className="flex items-center gap-3 p-4 bg-indigo-50 border border-indigo-100 rounded-3xl">
         <Info className="w-5 h-5 text-indigo-600 shrink-0" />
         <p className="text-[10px] text-indigo-900/60 font-medium leading-tight uppercase tracking-wider">
-          Approving updates your financial plan status so execution can proceed.
+          {t.advice.approvingHint}
         </p>
       </div>
     </div>

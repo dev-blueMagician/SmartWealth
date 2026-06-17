@@ -7,10 +7,12 @@ import { toApiError, type ApiError } from '../../services/apiError';
 import { ErrorPopup } from '../../components/ErrorPopup';
 import { SuccessToast } from '../../components/SuccessToast';
 import { cn } from '../../lib/utils';
+import { useT } from '../../i18n';
 
 export const WorkflowListPage = () => {
   const [items, setItems] = useState<WorkflowCacheItem[]>([]);
   const [query, setQuery] = useState('');
+  const t = useT();
   const [loadingRefresh, setLoadingRefresh] = useState(false);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
@@ -129,11 +131,11 @@ export const WorkflowListPage = () => {
     event?.preventDefault();
     if (!clientId) {
       setSuccessMessage(null);
-      setError(toApiError(new Error('Select a client first.')));
+      setError(toApiError(new Error(t.workflowList.errSelectClient)));
       return;
     }
     await fetchWorkflowsForClient(clientId);
-    setSuccessMessage('Workflow list refreshed.');
+    setSuccessMessage(t.workflowList.refreshedToast);
   };
 
   return (
@@ -143,7 +145,7 @@ export const WorkflowListPage = () => {
 
       <div className="flex justify-between items-end flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-serif italic text-zinc-900">Workflow Control Tower</h1>
+          <h1 className="text-3xl font-serif italic text-zinc-900">{t.workflowList.title}</h1>
           <p className="text-zinc-500 text-sm mt-1">
             Workflows are created on the AI-engine when an RM creates a case (<code className="text-xs">POST /api/cases</code>). Pick a
             client to see linked workflows from the database.
@@ -160,7 +162,7 @@ export const WorkflowListPage = () => {
             )}
           >
             <RefreshCw className={cn('w-4 h-4', loadingOptions && 'animate-spin')} />
-            Reload clients
+            {t.workflowList.reloadClients}
           </button>
           <button
             type="button"
@@ -172,7 +174,7 @@ export const WorkflowListPage = () => {
             )}
           >
             <RefreshCw className={cn('w-4 h-4', loadingRefresh && 'animate-spin')} />
-            Refresh list
+            {t.workflowList.refreshList}
           </button>
         </div>
       </div>
@@ -181,13 +183,13 @@ export const WorkflowListPage = () => {
         <section className="xl:col-span-2 bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-zinc-100 bg-zinc-50 space-y-3">
             <label className="block space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">Client</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">{t.workflowList.client}</span>
               <select
                 value={clientId}
                 onChange={(e) => handleClientChanged(e.target.value)}
                 className="w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
               >
-                {clientOptions.length === 0 && <option value="">No clients</option>}
+                {clientOptions.length === 0 && <option value="">{t.workflowList.noClients}</option>}
                 {clientOptions.map((item) => (
                   <option key={item.clientId} value={item.clientId}>
                     {item.clientName ?? 'Unknown Client'}
@@ -198,7 +200,7 @@ export const WorkflowListPage = () => {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filter by workflow ID, case id, status, type..."
+              placeholder={t.workflowList.filterPlaceholder}
               className="w-full px-4 py-2 bg-white border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
             />
           </div>
@@ -229,7 +231,7 @@ export const WorkflowListPage = () => {
                     </p>
                   </div>
                   <div className="inline-flex items-center gap-1 text-zinc-400 group-hover:text-blue-600 transition-colors">
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Manage</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{t.workflowList.manage}</span>
                     <ChevronRight className="w-4 h-4" />
                   </div>
                 </Link>
@@ -239,14 +241,14 @@ export const WorkflowListPage = () => {
         </section>
 
         <aside className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6 space-y-4">
-          <h2 className="text-lg font-serif italic text-zinc-900">RM case defaults</h2>
+          <h2 className="text-lg font-serif italic text-zinc-900">{t.workflowList.rmDefaults}</h2>
           <p className="text-xs text-zinc-500">
             New cases from <code className="text-[10px]">POST /api/cases</code> use type{' '}
             <span className="font-semibold text-zinc-800">ONBOARDING</span>. The backend creates an AI-engine workflow first (with retries),
             then persists the case with <code className="text-[10px]">workflow_id</code>.
           </p>
           <label className="block space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">Auto-selected case type</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">{t.workflowList.autoSelectedType}</span>
             <input
               value="ONBOARDING"
               readOnly
@@ -254,7 +256,7 @@ export const WorkflowListPage = () => {
             />
           </label>
           <label className="block space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">Selected client</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">{t.workflowList.selectedClient}</span>
             <input
               value={clientName}
               readOnly

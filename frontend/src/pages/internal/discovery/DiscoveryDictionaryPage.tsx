@@ -9,6 +9,7 @@ import type {
 import { toApiError, type ApiError } from '../../../services/apiError';
 import { ErrorPopup } from '../../../components/ErrorPopup';
 import { SuccessToast } from '../../../components/SuccessToast';
+import { useT } from '../../../i18n';
 
 const PAGE_SIZE = 50;
 
@@ -22,6 +23,7 @@ function parseOptionalInt(raw: string): number | null {
 }
 
 export function DiscoveryDictionaryPage() {
+  const t = useT();
   const [items, setItems] = useState<FieldDictionaryEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -184,7 +186,7 @@ export function DiscoveryDictionaryPage() {
 
   const handleImport = async () => {
     if (!importFile) {
-      setError(toApiError(new Error('Choose a CSV file first.')));
+      setError(toApiError(new Error(t.discoveryDict.errChooseCsv)));
       return;
     }
     setImporting(true);
@@ -214,18 +216,18 @@ export function DiscoveryDictionaryPage() {
       if (isCreateMode) {
         const key = systemFieldName.trim();
         if (!key) {
-          setError(toApiError(new Error('system_field_name is required.')));
+          setError(toApiError(new Error(t.discoveryDict.errSystemFieldRequired)));
           return;
         }
         await discoveryApi.createFieldDictionary({
           systemFieldName: key,
           ...buildPayload(),
         });
-        setSuccessMessage(`Created ${key}.`);
+        setSuccessMessage(t.discoveryDict.createdToast.replace('{key}', key));
         await loadCount();
       } else if (editingKey) {
         await discoveryApi.updateFieldDictionary(editingKey, buildPayload());
-        setSuccessMessage(`Updated ${editingKey}.`);
+        setSuccessMessage(t.discoveryDict.updatedToast.replace('{key}', editingKey));
       }
       closeModal();
       await loadPage();
@@ -239,14 +241,14 @@ export function DiscoveryDictionaryPage() {
   const handleDelete = async (key: string, fromModal = false) => {
     if (
       !window.confirm(
-        `Delete field "${key}"? Blocked if used by case discovery or question mappings.`,
+        t.discoveryDict.deleteConfirm.replace('{key}', key),
       )
     ) {
       return;
     }
     try {
       await discoveryApi.deleteFieldDictionary(key);
-      setSuccessMessage(`Deleted ${key}.`);
+      setSuccessMessage(t.discoveryDict.deletedToast.replace('{key}', key));
       if (fromModal || editingKey === key) closeModal();
       await loadCount();
       await loadPage();
@@ -266,15 +268,14 @@ export function DiscoveryDictionaryPage() {
         <div>
           <div className="flex items-center gap-2 text-indigo-700">
             <BookOpen className="w-6 h-6" />
-            <h1 className="text-2xl font-black text-slate-900">Field dictionary</h1>
+            <h1 className="text-2xl font-black text-slate-900">{t.discoveryDict.title}</h1>
           </div>
           <p className="text-sm text-slate-600 mt-1">
-            Browse all fields — use <span className="font-bold">New field</span> or row actions to add or
-            edit in a popup.
+            {t.discoveryDict.subtitle}
           </p>
           {dbTotal != null ? (
             <p className="text-xs text-slate-500 mt-1">
-              <span className="font-bold">{dbTotal.toLocaleString()}</span> fields in database
+              {t.discoveryDict.fieldsInDatabase.replace('{count}', dbTotal.toLocaleString())}
             </p>
           ) : null}
         </div>
@@ -284,20 +285,20 @@ export function DiscoveryDictionaryPage() {
           className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-500 flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          New field
+          {t.discoveryDict.newField}
         </button>
       </header>
 
       <details className="shrink-0 bg-white rounded-2xl border border-slate-200 shadow-sm group">
         <summary className="cursor-pointer list-none px-4 py-3 flex items-center gap-2 text-sm font-bold text-slate-800">
           <Upload className="w-4 h-4 text-indigo-600" />
-          Import CSV
-          <span className="text-xs font-normal text-slate-500 ml-1">(click to expand)</span>
+          {t.discoveryDict.importCsv}
+          <span className="text-xs font-normal text-slate-500 ml-1">{t.discoveryDict.clickToExpand}</span>
         </summary>
         <div className="px-4 pb-4 pt-0 space-y-3 border-t border-slate-100">
           <div className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-              File
+              {t.discoveryDict.file}
               <input
                 type="file"
                 accept=".csv,text/csv"
@@ -311,7 +312,7 @@ export function DiscoveryDictionaryPage() {
                 checked={updateExistingOnImport}
                 onChange={(e) => setUpdateExistingOnImport(e.target.checked)}
               />
-              Update existing fields
+              {t.discoveryDict.updateExisting}
             </label>
             <button
               type="button"
@@ -319,13 +320,16 @@ export function DiscoveryDictionaryPage() {
               onClick={() => void handleImport()}
               className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold disabled:opacity-50"
             >
-              {importing ? 'Importing…' : 'Import CSV'}
+              {importing ? t.discoveryDict.importing : t.discoveryDict.importCsv}
             </button>
           </div>
           {importResult ? (
             <p className="text-xs text-slate-700">
-              Rows {importResult.rowsRead} · Created {importResult.fieldsCreated} · Updated{' '}
-              {importResult.fieldsUpdated} · Skipped {importResult.fieldsSkipped}
+              {t.discoveryDict.importResult
+                .replace('{read}', String(importResult.rowsRead))
+                .replace('{created}', String(importResult.fieldsCreated))
+                .replace('{updated}', String(importResult.fieldsUpdated))
+                .replace('{skipped}', String(importResult.fieldsSkipped))}
             </p>
           ) : null}
         </div>
@@ -336,7 +340,7 @@ export function DiscoveryDictionaryPage() {
           <label className="flex flex-col gap-1 text-xs font-medium text-slate-600 min-w-[180px] flex-1">
             <span className="flex items-center gap-1">
               <Search className="w-3 h-3" />
-              Search
+              {t.discoveryDict.search}
             </span>
             <input
               value={search}
@@ -344,12 +348,12 @@ export function DiscoveryDictionaryPage() {
                 setSearch(e.target.value);
                 setPage(0);
               }}
-              placeholder="system field, domain, item…"
+              placeholder={t.discoveryDict.searchPlaceholder}
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
             />
           </label>
           <label className="flex flex-col gap-1 text-xs font-medium text-slate-600 min-w-[140px]">
-            Data domain
+            {t.discoveryDict.dataDomain}
             <input
               value={dataDomain}
               onChange={(e) => {
@@ -360,7 +364,7 @@ export function DiscoveryDictionaryPage() {
             />
           </label>
           <label className="flex flex-col gap-1 text-xs font-medium text-slate-600 min-w-[120px]">
-            Mandatory
+            {t.discoveryDict.mandatory}
             <select
               value={mandatoryLevel}
               onChange={(e) => {
@@ -369,29 +373,29 @@ export function DiscoveryDictionaryPage() {
               }}
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
             >
-              <option value="">All</option>
-              <option value="Mandatory">Mandatory</option>
-              <option value="Optional">Optional</option>
-              <option value="Conditional">Conditional</option>
+              <option value="">{t.discoveryDict.allMandatory}</option>
+              <option value="Mandatory">{t.discoveryDict.mandatory}</option>
+              <option value="Optional">{t.discoveryDict.filterOptional}</option>
+              <option value="Conditional">{t.discoveryDict.filterConditional}</option>
             </select>
           </label>
         </div>
 
         {loading ? (
-          <p className="p-6 text-sm text-slate-500">Loading…</p>
+          <p className="p-6 text-sm text-slate-500">{t.discoveryDict.loading}</p>
         ) : items.length === 0 ? (
-          <p className="p-6 text-sm text-slate-500">No fields found.</p>
+          <p className="p-6 text-sm text-slate-500">{t.discoveryDict.noFields}</p>
         ) : (
           <div className="flex-1 min-h-[420px] overflow-auto">
             <table className="w-full text-xs">
               <thead className="bg-slate-50 text-slate-600 uppercase sticky top-0 z-10">
                 <tr>
-                  <th className="text-left p-3 font-bold">System field</th>
-                  <th className="text-left p-3 font-bold">Domain · Item</th>
-                  <th className="text-left p-3 font-bold">Detail</th>
-                  <th className="text-left p-3 font-bold">Type</th>
-                  <th className="text-left p-3 font-bold">Mandatory</th>
-                  <th className="text-right p-3 font-bold w-28">Actions</th>
+                  <th className="text-left p-3 font-bold">{t.discoveryDict.colSystemField}</th>
+                  <th className="text-left p-3 font-bold">{t.discoveryDict.colDomainItem}</th>
+                  <th className="text-left p-3 font-bold">{t.discoveryDict.colDetail}</th>
+                  <th className="text-left p-3 font-bold">{t.discoveryDict.colType}</th>
+                  <th className="text-left p-3 font-bold">{t.discoveryDict.mandatory}</th>
+                  <th className="text-right p-3 font-bold w-28">{t.discoveryDict.colActions}</th>
                 </tr>
               </thead>
               <tbody>
@@ -416,7 +420,7 @@ export function DiscoveryDictionaryPage() {
                       <div className="flex justify-end gap-1">
                         <button
                           type="button"
-                          title="Edit"
+                          title={t.discoveryDict.edit}
                           onClick={() => startEdit(row)}
                           className="p-1.5 rounded-lg border border-slate-200 hover:bg-white text-slate-600"
                         >
@@ -424,7 +428,7 @@ export function DiscoveryDictionaryPage() {
                         </button>
                         <button
                           type="button"
-                          title="Delete"
+                          title={t.discoveryDict.delete}
                           onClick={() => void handleDelete(row.systemFieldName)}
                           className="p-1.5 rounded-lg border border-rose-200 hover:bg-rose-50 text-rose-600"
                         >
@@ -441,7 +445,10 @@ export function DiscoveryDictionaryPage() {
 
         <div className="p-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 shrink-0">
           <span>
-            Page {page + 1} / {totalPages} · {total.toLocaleString()} matching
+            {t.discoveryDict.pageInfo
+              .replace('{page}', String(page + 1))
+              .replace('{total}', String(totalPages))
+              .replace('{count}', total.toLocaleString())}
           </span>
           <div className="flex gap-2">
             <button
@@ -450,7 +457,7 @@ export function DiscoveryDictionaryPage() {
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               className="px-3 py-1 border border-slate-200 rounded-lg disabled:opacity-40"
             >
-              Previous
+              {t.discoveryDict.previous}
             </button>
             <button
               type="button"
@@ -458,7 +465,7 @@ export function DiscoveryDictionaryPage() {
               onClick={() => setPage((p) => p + 1)}
               className="px-3 py-1 border border-slate-200 rounded-lg disabled:opacity-40"
             >
-              Next
+              {t.discoveryDict.next}
             </button>
           </div>
         </div>
@@ -484,7 +491,7 @@ export function DiscoveryDictionaryPage() {
                   id="field-dictionary-modal-title"
                   className="text-lg font-bold text-slate-900"
                 >
-                  {isCreateMode ? 'New field' : 'Edit field'}
+                  {isCreateMode ? t.discoveryDict.newFieldTitle : t.discoveryDict.editFieldTitle}
                 </h2>
                 {!isCreateMode && editingKey ? (
                   <p className="text-xs font-mono text-slate-500 mt-0.5">{editingKey}</p>
@@ -495,7 +502,7 @@ export function DiscoveryDictionaryPage() {
                 onClick={closeModal}
                 disabled={saving}
                 className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-50"
-                aria-label="Close"
+                aria-label={t.common.close}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -692,7 +699,7 @@ export function DiscoveryDictionaryPage() {
                   disabled={saving}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold disabled:opacity-50"
                 >
-                  {saving ? 'Saving…' : isCreateMode ? 'Create field' : 'Save changes'}
+                  {saving ? t.discoveryDict.saving : isCreateMode ? t.discoveryDict.createField : t.discoveryDict.saveChanges}
                 </button>
                 <button
                   type="button"
@@ -700,7 +707,7 @@ export function DiscoveryDictionaryPage() {
                   disabled={saving}
                   className="px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 bg-white disabled:opacity-50"
                 >
-                  Cancel
+                  {t.discoveryDict.cancel}
                 </button>
                 {editingKey && !isCreateMode ? (
                   <button
@@ -710,7 +717,7 @@ export function DiscoveryDictionaryPage() {
                     className="ml-auto px-4 py-2 border border-rose-200 text-rose-700 rounded-xl text-sm font-bold hover:bg-rose-50 flex items-center gap-1 disabled:opacity-50"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete
+                    {t.discoveryDict.delete}
                   </button>
                 ) : null}
               </div>

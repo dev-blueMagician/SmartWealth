@@ -21,11 +21,13 @@ import {
 import { toApiError, type ApiError } from '../../services/apiError';
 import { ErrorPopup } from '../../components/ErrorPopup';
 import { SuccessToast } from '../../components/SuccessToast';
+import { useT } from '../../i18n';
 
 export const PlanningWorkspacePage = () => {
   const { portalCaps } = useAuth();
   const { caseId } = useParams();
   const navigate = useNavigate();
+  const t = useT();
   const [loading, setLoading] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -102,10 +104,10 @@ export const PlanningWorkspacePage = () => {
           assumptions: assumptionPayload,
         });
         setPlanDetail(regenerated);
-        setSuccessMessage('Planning draft regenerated with AI agent.');
+        setSuccessMessage(t.planningWorkspace.draftRegenerated);
       } else {
         if (!selectedTemplateId) {
-          throw new Error('Select an ACTIVE plan template before creating a draft.');
+          throw new Error(t.planningWorkspace.errSelectActiveTemplate);
         }
         const created = await wealthApi.createCasePlanningDraft(caseId, {
           templateId: selectedTemplateId,
@@ -113,7 +115,7 @@ export const PlanningWorkspacePage = () => {
         });
         setSelectedPlanId(created.planId);
         setPlanDetail(created);
-        setSuccessMessage('Planning draft created with AI agent.');
+        setSuccessMessage(t.planningWorkspace.draftCreated);
       }
       await loadWorkspace();
     } catch (err) {
@@ -125,7 +127,7 @@ export const PlanningWorkspacePage = () => {
 
   const handleExportWord = async () => {
     if (!selectedPlanId) {
-      setError(toApiError(new Error('Select a planning draft to export.')));
+      setError(toApiError(new Error(t.planningWorkspace.errSelectDraftExport)));
       return;
     }
     setExporting(true);
@@ -136,7 +138,7 @@ export const PlanningWorkspacePage = () => {
         exportMode: 'llm_only',
       });
       await wealthApi.downloadPlanningArtifact(result.artifactId, result.filename);
-      setSuccessMessage(`Exported Word: ${result.filename}`);
+      setSuccessMessage(t.planningWorkspace.exportedWord.replace('{filename}', result.filename));
     } catch (err) {
       setError(toApiError(err));
     } finally {
@@ -146,14 +148,14 @@ export const PlanningWorkspacePage = () => {
 
   const handleFinalize = async () => {
     if (!selectedPlanId) {
-      setError(toApiError(new Error('Select a planning draft to finalize.')));
+      setError(toApiError(new Error(t.planningWorkspace.errSelectDraft)));
       return;
     }
     setLoading(true);
     try {
       const updated = await wealthApi.regeneratePlanningDraft(selectedPlanId, { markReadyForReview: true });
       setPlanDetail(updated);
-      setSuccessMessage('Draft marked ready for review. Use case chat or API to finalize if needed.');
+      setSuccessMessage(t.planningWorkspace.draftMarkedReady);
       await loadWorkspace();
     } catch (err) {
       setError(toApiError(err));
@@ -164,11 +166,11 @@ export const PlanningWorkspacePage = () => {
 
   const handleCreateRecommendation = async () => {
     if (!selectedPlanId) {
-      setError(toApiError(new Error('Create a planning draft before creating a recommendation.')));
+      setError(toApiError(new Error(t.planningWorkspace.errCreateDraftFirst)));
       return;
     }
     if (!recommendationSummary.trim()) {
-      setError(toApiError(new Error('Recommendation summary is required.')));
+      setError(toApiError(new Error(t.planningWorkspace.errRecSummaryRequired)));
       return;
     }
     setCreatingRecommendation(true);
@@ -200,9 +202,9 @@ export const PlanningWorkspacePage = () => {
             onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 text-zinc-400 hover:text-zinc-900 transition-colors text-[10px] font-bold uppercase tracking-widest mb-2"
           >
-            <ChevronLeft className="w-4 h-4" /> Back to Case Detail
+            <ChevronLeft className="w-4 h-4" /> {t.planningWorkspace.backToCase}
           </button>
-          <h1 className="text-3xl font-serif italic text-zinc-900">Wealth Planning Workspace</h1>
+          <h1 className="text-3xl font-serif italic text-zinc-900">{t.planningWorkspace.title}</h1>
           <p className="text-zinc-500 text-sm">
             Case Ref: <span className="font-mono text-zinc-900 font-bold">{caseId?.toUpperCase()}</span>
           </p>
@@ -219,7 +221,7 @@ export const PlanningWorkspacePage = () => {
               ) : (
                 <Cpu className={cn('w-4 h-4 text-blue-600', drafting && 'animate-spin')} />
               )}
-              {selectedPlanId ? 'Regenerate draft (AI)' : 'Create draft (AI)'}
+              {selectedPlanId ? t.planningWorkspace.regenerateDraft : t.planningWorkspace.createDraft}
             </button>
             <button
               onClick={handleExportWord}
@@ -227,7 +229,7 @@ export const PlanningWorkspacePage = () => {
               className="px-6 py-3 bg-emerald-600 text-white rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-emerald-500 transition-all disabled:opacity-50"
             >
               <FileDown className={cn('w-4 h-4', exporting && 'animate-pulse')} />
-              Export plan ( *.Word)
+              {t.planningWorkspace.exportWord}
             </button>
             <button
               onClick={handleCreateRecommendation}
@@ -235,14 +237,14 @@ export const PlanningWorkspacePage = () => {
               className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/10 disabled:opacity-50"
             >
               <Target className={cn('w-4 h-4', creatingRecommendation && 'animate-pulse')} />
-              Create Recommendation
+              {t.planningWorkspace.createRecommendation}
             </button>
             <button
               onClick={handleFinalize}
               disabled={loading || !selectedPlanId}
               className="px-6 py-3 bg-zinc-900 text-white rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-900/10 disabled:opacity-50"
             >
-              <Save className="w-4 h-4" /> Mark ready for review
+              <Save className="w-4 h-4" /> {t.planningWorkspace.markReady}
             </button>
           </div>
         )}
@@ -251,18 +253,18 @@ export const PlanningWorkspacePage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <section className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden p-8 space-y-6">
-            <h2 className="text-xl font-serif italic text-zinc-900">Draft &amp; template</h2>
+            <h2 className="text-xl font-serif italic text-zinc-900">{t.planningWorkspace.draftTemplate}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <label className="space-y-2 block">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">
-                  Planning draft (case)
+                  {t.planningWorkspace.planningDraft}
                 </span>
                 <select
                   value={selectedPlanId}
                   onChange={(e) => setSelectedPlanId(e.target.value)}
                   className="w-full px-5 py-4 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm outline-none"
                 >
-                  <option value="">— New draft —</option>
+                  <option value="">{t.planningWorkspace.newDraft}</option>
                   {drafts.map((d) => (
                     <option key={d.planId} value={d.planId}>
                       {d.templateCode ?? 'plan'} · {d.status} · {d.planId.slice(0, 8)}
@@ -272,7 +274,7 @@ export const PlanningWorkspacePage = () => {
               </label>
               <label className="space-y-2 block">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">
-                  Template for create
+                  {t.planningWorkspace.templateForCreate}
                 </span>
                 <select
                   value={selectedTemplateId}
@@ -281,11 +283,11 @@ export const PlanningWorkspacePage = () => {
                   className="w-full px-5 py-4 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm outline-none disabled:opacity-60"
                 >
                   {templates.length === 0 ? (
-                    <option value="">No ACTIVE template — upload in Plan templates</option>
+                    <option value="">{t.planningWorkspace.noActiveTemplate}</option>
                   ) : (
-                    templates.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.code} v{t.versionNo} ({t.locale})
+                    templates.map((tmpl) => (
+                      <option key={tmpl.id} value={tmpl.id}>
+                        {tmpl.code} v{tmpl.versionNo} ({tmpl.locale})
                       </option>
                     ))
                   )}
@@ -293,16 +295,16 @@ export const PlanningWorkspacePage = () => {
               </label>
               <label className="space-y-2 block md:col-span-2">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">
-                  Template for Word export
+                  {t.planningWorkspace.templateForExport}
                 </span>
                 <select
                   value={exportTemplateId}
                   onChange={(e) => setExportTemplateId(e.target.value)}
                   className="w-full px-5 py-4 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm outline-none"
                 >
-                  {templates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.code} v{t.versionNo}
+                  {templates.map((tmpl) => (
+                    <option key={tmpl.id} value={tmpl.id}>
+                      {tmpl.code} v{tmpl.versionNo}
                     </option>
                   ))}
                 </select>
@@ -315,13 +317,13 @@ export const PlanningWorkspacePage = () => {
               <div className="p-3 bg-blue-50 rounded-2xl">
                 <Target className="w-6 h-6 text-blue-600" />
               </div>
-              <h2 className="text-xl font-serif italic">Strategic Assumptions</h2>
+              <h2 className="text-xl font-serif italic">{t.planningWorkspace.strategicAssumptions}</h2>
             </div>
 
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">
-                  Investment Horizon (Years)
+                  {t.planningWorkspace.horizonYears}
                 </label>
                 <input
                   type="number"
@@ -332,7 +334,7 @@ export const PlanningWorkspacePage = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">
-                  Target Annual Return (%)
+                  {t.planningWorkspace.targetReturn}
                 </label>
                 <input
                   type="number"
@@ -343,7 +345,7 @@ export const PlanningWorkspacePage = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">
-                  Inflation (%)
+                  {t.planningWorkspace.inflation}
                 </label>
                 <input
                   type="number"
@@ -354,36 +356,36 @@ export const PlanningWorkspacePage = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">
-                  Risk Profile Anchor
+                  {t.planningWorkspace.riskProfile}
                 </label>
                 <select
                   value={assumptions.riskTolerance}
                   onChange={(e) => setAssumptions({ ...assumptions, riskTolerance: e.target.value })}
                   className="w-full px-5 py-4 bg-zinc-50 border border-zinc-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500/10 outline-none appearance-none"
                 >
-                  <option>Conservative</option>
-                  <option>Balanced</option>
-                  <option>Growth</option>
-                  <option>Aggressive</option>
+                  <option value="Conservative">{t.planningWorkspace.riskConservative}</option>
+                  <option value="Balanced">{t.planningWorkspace.riskBalanced}</option>
+                  <option value="Growth">{t.planningWorkspace.riskGrowth}</option>
+                  <option value="Aggressive">{t.planningWorkspace.riskAggressive}</option>
                 </select>
               </div>
             </div>
           </section>
 
           <section className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden p-8">
-            <h2 className="text-xl font-serif italic text-zinc-900 mb-6">Plan draft payload</h2>
+            <h2 className="text-xl font-serif italic text-zinc-900 mb-6">{t.planningWorkspace.planDraftPayload}</h2>
             <pre className="text-xs font-mono bg-zinc-50 border border-zinc-100 rounded-2xl p-4 overflow-auto max-h-[360px]">
               {planDetail?.payload
                 ? JSON.stringify(planDetail.payload, null, 2)
-                : 'Select or create a planning draft.'}
+                : t.planningWorkspace.selectOrCreate}
             </pre>
           </section>
 
           <section className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden p-8 space-y-4">
-            <h2 className="text-xl font-serif italic text-zinc-900">Recommendation</h2>
+            <h2 className="text-xl font-serif italic text-zinc-900">{t.planningWorkspace.recommendation}</h2>
             <label className="block space-y-2">
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">
-                Recommendation Summary
+                {t.planningWorkspace.recommendationSummary}
               </span>
               <textarea
                 value={recommendationSummary}
@@ -392,9 +394,9 @@ export const PlanningWorkspacePage = () => {
               />
             </label>
             <div className="p-4 bg-zinc-50 border border-zinc-100 rounded-2xl">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Recommendation ID</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{t.planningWorkspace.recommendationId}</p>
               <p className="mt-1 text-sm font-mono font-bold text-zinc-900">
-                {recommendationId ?? 'Not created yet'}
+                {recommendationId ?? t.planningWorkspace.notCreatedYet}
               </p>
             </div>
           </section>
@@ -404,7 +406,7 @@ export const PlanningWorkspacePage = () => {
           <section className="bg-zinc-900 rounded-3xl p-6 text-white border border-zinc-800 shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all duration-700" />
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-serif italic tracking-tight">AI Planning Agent</h3>
+              <h3 className="text-lg font-serif italic tracking-tight">{t.planningWorkspace.aiPlanningAgent}</h3>
               <Zap className="w-5 h-5 text-blue-400" />
             </div>
             <div className="space-y-6 relative z-10">

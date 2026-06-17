@@ -5,8 +5,10 @@ import type { DiscoveryFieldMapping, DiscoveryQuestion } from '../../../services
 import { toApiError, type ApiError } from '../../../services/apiError';
 import { ErrorPopup } from '../../../components/ErrorPopup';
 import { SuccessToast } from '../../../components/SuccessToast';
+import { useT } from '../../../i18n';
 
 export function DiscoveryMappingPage() {
+  const t = useT();
   const [mappings, setMappings] = useState<DiscoveryFieldMapping[]>([]);
   const [questions, setQuestions] = useState<DiscoveryQuestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,10 +138,10 @@ export function DiscoveryMappingPage() {
     try {
       if (isCreateMode) {
         await discoveryApi.createMapping(body);
-        setSuccessMessage('Mapping created.');
+        setSuccessMessage(t.discoveryMapping.createdToast);
       } else if (editingId) {
         await discoveryApi.updateMapping(editingId, body);
-        setSuccessMessage('Mapping updated.');
+        setSuccessMessage(t.discoveryMapping.updatedToast);
       }
       closeModal();
       await load();
@@ -151,10 +153,10 @@ export function DiscoveryMappingPage() {
   };
 
   const handleDelete = async (id: string, fromModal = false) => {
-    if (!window.confirm('Delete this mapping?')) return;
+    if (!window.confirm(t.discoveryMapping.deleteConfirm)) return;
     try {
       await discoveryApi.deleteMapping(id);
-      setSuccessMessage('Mapping deleted.');
+      setSuccessMessage(t.discoveryMapping.deletedToast);
       if (fromModal || editingId === id) closeModal();
       await load();
     } catch (err) {
@@ -193,10 +195,10 @@ export function DiscoveryMappingPage() {
         <div>
           <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
             <Link2 className="w-6 h-6 text-indigo-600" />
-            Discovery field mappings
+            {t.discoveryMapping.title}
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Map question IDs to <span className="font-mono">system_field</span> — use popup for add/edit.
+            {t.discoveryMapping.subtitle}
           </p>
         </div>
         <button
@@ -205,7 +207,7 @@ export function DiscoveryMappingPage() {
           className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-500 flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          New mapping
+          {t.discoveryMapping.newMapping}
         </button>
       </header>
 
@@ -215,7 +217,7 @@ export function DiscoveryMappingPage() {
           <input
             value={qidFilter}
             onChange={(e) => setQidFilter(e.target.value)}
-            placeholder="Filter by QID"
+            placeholder={t.discoveryMapping.filterByQid}
             className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono flex-1 min-w-[120px]"
           />
           <select
@@ -223,31 +225,31 @@ export function DiscoveryMappingPage() {
             onChange={(e) => setModuleFilter(e.target.value)}
             className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white min-w-[140px]"
           >
-            <option value="">All modules</option>
+            <option value="">{t.discoveryMapping.allModules}</option>
             {uniqueModules.map((m) => (
               <option key={m} value={m}>
                 {m}
               </option>
             ))}
           </select>
-          <span className="text-xs text-slate-500 ml-auto">{filtered.length} mappings</span>
+          <span className="text-xs text-slate-500 ml-auto">{t.discoveryMapping.mappingsCount.replace('{count}', String(filtered.length))}</span>
         </div>
 
         {loading ? (
-          <p className="p-6 text-sm text-slate-500">Loading…</p>
+          <p className="p-6 text-sm text-slate-500">{t.discoveryMapping.loading}</p>
         ) : filtered.length === 0 ? (
-          <p className="p-6 text-sm text-slate-500">No mappings match filters.</p>
+          <p className="p-6 text-sm text-slate-500">{t.discoveryMapping.noMappings}</p>
         ) : (
           <div className="flex-1 min-h-[420px] overflow-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-[10px] uppercase text-slate-500 sticky top-0 z-10">
                 <tr>
                   <th className="text-left px-4 py-3 font-bold">QID</th>
-                  <th className="text-left px-4 py-3 font-bold">Module</th>
+                  <th className="text-left px-4 py-3 font-bold">{t.discoveryMapping.colModule}</th>
                   <th className="text-left px-4 py-3 font-bold">system_field</th>
                   <th className="text-left px-4 py-3 font-bold">entity_type</th>
                   <th className="text-left px-4 py-3 font-bold">transform</th>
-                  <th className="text-right px-4 py-3 font-bold w-24">Actions</th>
+                  <th className="text-right px-4 py-3 font-bold w-24">{t.discoveryMapping.colActions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -270,7 +272,7 @@ export function DiscoveryMappingPage() {
                       <div className="flex justify-end gap-1">
                         <button
                           type="button"
-                          title="Edit"
+                          title={t.discoveryMapping.edit}
                           onClick={() => startEdit(m)}
                           className="p-1.5 rounded-lg border border-slate-200 hover:bg-white text-slate-600"
                         >
@@ -278,7 +280,7 @@ export function DiscoveryMappingPage() {
                         </button>
                         <button
                           type="button"
-                          title="Delete"
+                          title={t.discoveryMapping.delete}
                           onClick={() => void handleDelete(m.id)}
                           className="p-1.5 rounded-lg border border-rose-200 hover:bg-rose-50 text-rose-600"
                         >
@@ -310,14 +312,14 @@ export function DiscoveryMappingPage() {
           >
             <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-slate-100 shrink-0">
               <h2 id="mapping-modal-title" className="text-lg font-bold text-slate-900">
-                {isCreateMode ? 'New mapping' : 'Edit mapping'}
+                {isCreateMode ? t.discoveryMapping.newMappingTitle : t.discoveryMapping.editMappingTitle}
               </h2>
               <button
                 type="button"
                 onClick={closeModal}
                 disabled={saving}
                 className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-50"
-                aria-label="Close"
+                aria-label={t.common.close}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -359,7 +361,7 @@ export function DiscoveryMappingPage() {
                       <option key={f} value={f} />
                     ))}
                   </datalist>
-                  <p className="text-[10px] text-slate-500">Must exist in Field dictionary.</p>
+                  <p className="text-[10px] text-slate-500">{t.discoveryMapping.mustExistInDict}</p>
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block space-y-1">
@@ -390,7 +392,7 @@ export function DiscoveryMappingPage() {
                   className="inline-flex items-center gap-1 px-3 py-2 border border-indigo-200 text-indigo-700 rounded-lg text-xs font-bold hover:bg-indigo-50"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  AI suggest mapping
+                  {t.discoveryMapping.aiSuggest}
                 </button>
               </div>
 
@@ -400,7 +402,7 @@ export function DiscoveryMappingPage() {
                   disabled={saving}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold disabled:opacity-50"
                 >
-                  {saving ? 'Saving…' : isCreateMode ? 'Create mapping' : 'Save changes'}
+                  {saving ? t.discoveryMapping.saving : isCreateMode ? t.discoveryMapping.createMapping : t.discoveryMapping.saveChanges}
                 </button>
                 <button
                   type="button"
@@ -408,7 +410,7 @@ export function DiscoveryMappingPage() {
                   disabled={saving}
                   className="px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold bg-white disabled:opacity-50"
                 >
-                  Cancel
+                  {t.discoveryMapping.cancel}
                 </button>
                 {editingId && !isCreateMode ? (
                   <button
@@ -418,7 +420,7 @@ export function DiscoveryMappingPage() {
                     className="ml-auto px-4 py-2 border border-rose-200 text-rose-700 rounded-xl text-sm font-bold hover:bg-rose-50 flex items-center gap-1"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete
+                    {t.discoveryMapping.delete}
                   </button>
                 ) : null}
               </div>

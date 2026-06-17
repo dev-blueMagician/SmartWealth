@@ -175,7 +175,7 @@ const Sidebar = () => {
       auth.username.slice(0, 2).toUpperCase()
     : '—';
 
-  const roleLabel = auth?.roles?.length ? auth.roles.join(' · ') : 'Staff';
+  const roleLabel = auth?.roles?.length ? auth.roles.join(' · ') : t.common.staff;
 
   return (
     <div className="w-64 bg-slate-900 text-slate-300 h-screen flex flex-col border-r border-slate-800">
@@ -344,7 +344,7 @@ const InternalLayout = ({ children }: { children: React.ReactNode }) => {
       <header className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">{t.header.portalTitle}</h1>
-          <p className="text-sm text-slate-500">{t.header.welcome(displayName)}</p>
+          <p className="text-sm text-slate-500">{t.header.welcome.replace('{name}', displayName)}</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative group">
@@ -359,6 +359,12 @@ const InternalLayout = ({ children }: { children: React.ReactNode }) => {
             <Bell className="w-5 h-5" />
             <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
           </button>
+          <Link
+            to="/mobile"
+            className="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-all flex items-center gap-2"
+          >
+            {t.header.switchToClient} <ChevronRight className="w-4 h-4" />
+          </Link>
         </div>
       </header>
       <AnimatePresence mode="wait">
@@ -377,23 +383,52 @@ const InternalLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const MobileLayout = ({ children }: { children: React.ReactNode }) => (
+const MobileLayout = ({ children }: { children: React.ReactNode }) => {
+  const t = useT();
+  const { lang, setLang } = useLocale();
+  return (
   <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 sm:p-0">
     {/* Device Frame Simulation */}
     <div className="w-full max-w-[420px] h-[850px] bg-white rounded-[3rem] shadow-2xl border-[8px] border-slate-900 overflow-hidden relative flex flex-col">
+      {/* Platform Switcher (back to internal portal) */}
+      <Link
+        to="/internal"
+        className="absolute top-12 left-1/2 -translate-x-1/2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white z-50 border border-white/20 hover:bg-white/30 transition-all uppercase tracking-widest leading-none"
+      >
+        {t.common.switchToInternal}
+      </Link>
+      {/* Language toggle */}
+      <div className="absolute top-11 right-4 flex items-center gap-1 z-50" role="group" aria-label={t.lang.label}>
+        {(['en', 'vi'] as const).map((code) => (
+          <button
+            key={code}
+            type="button"
+            onClick={() => setLang(code)}
+            aria-pressed={lang === code}
+            className={cn(
+              'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all border',
+              lang === code
+                ? 'bg-white/30 text-white border-white/30'
+                : 'bg-white/10 text-white/70 border-white/10 hover:bg-white/20',
+            )}
+          >
+            {code === 'en' ? 'EN' : 'VI'}
+          </button>
+        ))}
+      </div>
       <div className="h-44 bg-indigo-600 p-6 pt-12 text-white shrink-0 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-        <div className="flex justify-between items-start relative z-10">
+        <div className="flex justify-between items-start relative z-10 mt-6">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Hello, David</h2>
-            <p className="text-white/80 text-sm">Your wealth snapshot</p>
+            <h2 className="text-2xl font-bold tracking-tight">{t.mobileLayout.hello}</h2>
+            <p className="text-white/80 text-sm">{t.mobileLayout.snapshot}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md">
              <UserIcon className="w-5 h-5" />
           </div>
         </div>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto p-5 -mt-6 bg-white rounded-t-3xl relative z-20">
         <AnimatePresence mode="wait">
           {children}
@@ -405,31 +440,32 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => (
           <div className="p-2 rounded-full group-hover:bg-indigo-50 transition-colors">
             <Home className="w-6 h-6" />
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider">Home</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider">{t.mobileNav.home}</span>
         </Link>
         <Link to="/mobile/portfolio" className="flex flex-col items-center gap-1 text-slate-400 hover:text-indigo-600 transition-colors group">
           <div className="p-2 rounded-full group-hover:bg-indigo-50 transition-colors">
             <PieChart className="w-6 h-6" />
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider">Wealth</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider">{t.mobileNav.wealth}</span>
         </Link>
         <Link to="/mobile/advice" className="flex flex-col items-center gap-1 text-slate-400 hover:text-indigo-600 transition-colors group">
            <div className="p-2 rounded-full group-hover:bg-indigo-50 transition-colors">
              <Zap className="w-6 h-6" />
            </div>
-           <span className="text-[10px] font-bold uppercase tracking-wider">Advice</span>
+           <span className="text-[10px] font-bold uppercase tracking-wider">{t.mobileNav.advice}</span>
         </Link>
         <Link to="/mobile/messages" className="flex flex-col items-center gap-1 text-slate-400 hover:text-indigo-600 transition-colors group">
           <div className="p-2 rounded-full group-hover:bg-indigo-50 transition-colors relative">
             <MessageSquare className="w-6 h-6" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider">Chat</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider">{t.mobileNav.chat}</span>
         </Link>
       </nav>
     </div>
   </div>
-);
+  );
+};
 
 // --- Sub-Pages (Minimal implementation for preview) ---
 
@@ -494,10 +530,10 @@ const InternalDashboardContent = () => {
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: t.dashboard.activeCases, value: String(cases.length), trend: 'Live from backend', icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: t.dashboard.pendingDiscovery, value: String(pendingDiscovery), trend: 'Need readiness checks', icon: Search, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: t.dashboard.planningReady, value: String(readyForPlanning), trend: 'Case phase PLANNING + status READY', icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-          { label: t.dashboard.dataSource, value: loading ? t.dashboard.loadingLabel : 'API', trend: 'No sample dataset', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: t.dashboard.activeCases, value: String(cases.length), trend: t.dashboard.trendLive, icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: t.dashboard.pendingDiscovery, value: String(pendingDiscovery), trend: t.dashboard.trendReadiness, icon: Search, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: t.dashboard.planningReady, value: String(readyForPlanning), trend: t.dashboard.trendPlanningReady, icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+          { label: t.dashboard.dataSource, value: loading ? t.dashboard.loadingLabel : t.dashboard.valueApi, trend: t.dashboard.trendNoSample, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -560,10 +596,10 @@ const InternalDashboardContent = () => {
             </div>
             <div className="divide-y divide-zinc-100">
               <div className="grid grid-cols-5 px-6 py-3 bg-zinc-50 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-                <span className="col-span-2">Client / Case ID</span>
-                <span>Stage</span>
-                <span>Source</span>
-                <span className="text-right">Created</span>
+                <span className="col-span-2">{t.dashboard.colClientCase}</span>
+                <span>{t.dashboard.colStage}</span>
+                <span>{t.dashboard.colSource}</span>
+                <span className="text-right">{t.dashboard.colCreated}</span>
               </div>
               {loading && <div className="px-6 py-8 text-sm text-zinc-500">{t.dashboard.loadingCases}</div>}
               {!loading && cases.length === 0 && <div className="px-6 py-8 text-sm text-zinc-500">{t.dashboard.noCases}</div>}
@@ -578,14 +614,14 @@ const InternalDashboardContent = () => {
                       {(item.clientName || 'U').slice(0, 1).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-900 group-hover:text-blue-600 transition-colors">{item.clientName || 'Unknown Client'}</p>
+                      <p className="text-sm font-bold text-zinc-900 group-hover:text-blue-600 transition-colors">{item.clientName || t.dashboard.unknownClient}</p>
                       <p className="text-[10px] font-mono text-zinc-400">{item.id} • {item.type || '-'}</p>
                     </div>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full text-zinc-500 bg-zinc-100">{item.status || 'UNKNOWN'}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full text-zinc-500 bg-zinc-100">{item.status || t.dashboard.unknownStatus}</span>
                   </div>
-                  <div className="text-xs text-zinc-600 font-medium">Local API</div>
+                  <div className="text-xs text-zinc-600 font-medium">{t.dashboard.localApi}</div>
                   <div className="text-xs text-zinc-400 text-right">{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-'}</div>
                 </Link>
               ))}
@@ -602,6 +638,7 @@ type MobileHomeLocationState = {
 };
 
 const MobileHome = () => {
+  const t = useT();
   const location = useLocation();
   const navigate = useNavigate();
   const [clientOptions, setClientOptions] = useState<WorkflowCreateClientOption[]>([]);
@@ -615,7 +652,7 @@ const MobileHome = () => {
   useEffect(() => {
     const state = location.state as MobileHomeLocationState | null | undefined;
     if (!state?.adviceApproved) return;
-    setSuccessMessage('Approval successful.');
+    setSuccessMessage(t.mobileHome.approvalSuccess);
     navigate('.', { replace: true, state: {} });
   }, [location.state, navigate]);
 
@@ -679,12 +716,12 @@ const MobileHome = () => {
 
   const handleRegisterDevice = async () => {
     if (!selectedClientId) {
-      setError(toApiError(new Error('Select a client first (create a case in Internal Portal if empty).')));
+      setError(toApiError(new Error(t.mobileHome.errorSelectClient)));
       return;
     }
     const trimmedDevice = deviceId.trim();
     if (!trimmedDevice) {
-      setError(toApiError(new Error('Device ID is required.')));
+      setError(toApiError(new Error(t.mobileHome.errorDeviceRequired)));
       return;
     }
     setRegistering(true);
@@ -693,7 +730,7 @@ const MobileHome = () => {
         clientId: selectedClientId,
         deviceId: trimmedDevice,
       });
-      setSuccessMessage('Device registered. Client is now ACTIVE.');
+      setSuccessMessage(t.mobileHome.deviceRegistered);
     } catch (err) {
       setError(toApiError(err));
     } finally {
@@ -713,12 +750,12 @@ const MobileHome = () => {
       <SuccessToast message={successMessage} onClose={() => setSuccessMessage(null)} />
 
       <div className="space-y-2">
-        <p className="text-zinc-500 font-medium text-sm">Total Assets</p>
+        <p className="text-zinc-500 font-medium text-sm">{t.mobileHome.totalAssets}</p>
         <p className="text-4xl font-bold tracking-tight text-zinc-900">$1,424,500.00</p>
         <div className="flex items-center gap-2">
-          <span className="text-emerald-600 text-xs font-bold bg-emerald-50 px-2 py-0.5 rounded-md">+4.2% (YTD)</span>
+          <span className="text-emerald-600 text-xs font-bold bg-emerald-50 px-2 py-0.5 rounded-md">{t.mobileHome.ytd}</span>
           <span className="text-zinc-300">•</span>
-          <span className="text-zinc-400 text-xs font-medium">Updated 2m ago</span>
+          <span className="text-zinc-400 text-xs font-medium">{t.mobileHome.updatedAgo}</span>
         </div>
       </div>
 
@@ -728,21 +765,21 @@ const MobileHome = () => {
             <Smartphone className="w-5 h-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-zinc-900">Activate this device</p>
+            <p className="text-sm font-bold text-zinc-900">{t.mobileHome.activateDevice}</p>
             <p className="text-[11px] text-zinc-600 mt-0.5 leading-relaxed">
-              Calls <span className="font-mono">POST /mobile/register</span> so the client becomes ACTIVE before discovery.
+              {t.mobileHome.activateDeviceDesc}
             </p>
           </div>
         </div>
         <label className="block space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">Client</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">{t.mobileHome.client}</span>
           <select
             value={selectedClientId}
             onChange={(e) => setSelectedClientId(e.target.value)}
             disabled={loadingClients || registering}
             className="w-full px-4 py-3 rounded-2xl border border-emerald-200/80 bg-white text-sm outline-none focus:ring-2 focus:ring-emerald-500/20"
           >
-            {clientOptions.length === 0 && <option value="">No client — create a case in Internal Portal</option>}
+            {clientOptions.length === 0 && <option value="">{t.mobileHome.noClientCreateCase}</option>}
             {clientOptions.map((item) => (
               <option key={item.clientId} value={item.clientId}>
                 {item.clientName ?? item.clientId}
@@ -751,13 +788,14 @@ const MobileHome = () => {
           </select>
           {clientOptions.length === 0 && !loadingClients && (
             <p className="text-[11px] text-zinc-600 leading-relaxed">
-              Companion-only mode: open the <strong className="font-semibold text-zinc-800">Wealth</strong> tab and paste your{' '}
-              <span className="font-mono text-zinc-700">clientId</span>, or sign in on Professional Portal to load clients here.
+              {t.mobileHome.companionHintPrefix}{' '}
+              <strong className="font-semibold text-zinc-800">{t.mobileHome.companionHintTab}</strong> {t.mobileHome.companionHintMid}{' '}
+              <span className="font-mono text-zinc-700">{t.mobileHome.companionHintSuffix}</span>
             </p>
           )}
         </label>
         <label className="block space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">Device ID</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">{t.mobileHome.deviceId}</span>
           <input
             type="text"
             value={deviceId}
@@ -778,13 +816,13 @@ const MobileHome = () => {
           )}
         >
           <Smartphone className={cn('w-4 h-4', registering && 'animate-pulse')} />
-          {registering ? 'Registering…' : 'Register device (ACTIVE)'}
+          {registering ? t.mobileHome.registering : t.mobileHome.registerDevice}
         </button>
         <Link
           to="/mobile/onboarding"
           className="block text-center text-[11px] font-bold text-emerald-800 underline underline-offset-2 hover:text-emerald-900"
         >
-          Or continue full onboarding →
+          {t.mobileHome.continueOnboarding}
         </Link>
       </section>
 
@@ -797,8 +835,8 @@ const MobileHome = () => {
             <PieChart className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-bold text-zinc-900">Portfolio</p>
-            <p className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Drift: 2.1%</p>
+            <p className="text-sm font-bold text-zinc-900">{t.mobileHome.portfolio}</p>
+            <p className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">{t.mobileHome.drift}</p>
           </div>
         </Link>
         <Link
@@ -810,16 +848,16 @@ const MobileHome = () => {
             <Zap className="w-6 h-6" />
           </div>
           <div className="relative z-10">
-            <p className="text-sm font-bold">New Advice</p>
-            <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Action Required</p>
+            <p className="text-sm font-bold">{t.mobileHome.newAdvice}</p>
+            <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">{t.mobileHome.actionRequired}</p>
           </div>
         </Link>
       </div>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-lg font-bold text-zinc-900">Next Steps</h3>
-          <span className="text-xs font-bold text-blue-600">2 Pending</span>
+          <h3 className="text-lg font-bold text-zinc-900">{t.mobileHome.nextSteps}</h3>
+          <span className="text-xs font-bold text-blue-600">{t.mobileHome.pendingCount}</span>
         </div>
         <div className="space-y-3">
           <Link
@@ -831,9 +869,9 @@ const MobileHome = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-zinc-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight leading-none mb-1">
-                Complete Risk Profile
+                {t.mobileHome.completeRiskProfile}
               </p>
-              <p className="text-[11px] text-zinc-500 font-medium">Due in 2 days</p>
+              <p className="text-[11px] text-zinc-500 font-medium">{t.mobileHome.dueIn2Days}</p>
             </div>
             <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:translate-x-1 transition-transform" />
           </Link>
@@ -844,9 +882,9 @@ const MobileHome = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-zinc-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight leading-none mb-1">
-                Upload Address Proof
+                {t.mobileHome.uploadAddressProof}
               </p>
-              <p className="text-[11px] text-zinc-500 font-medium">Required for Trading</p>
+              <p className="text-[11px] text-zinc-500 font-medium">{t.mobileHome.requiredForTrading}</p>
             </div>
             <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:translate-x-1 transition-transform" />
           </div>
@@ -863,6 +901,7 @@ const scoreToRiskProfile = (score: number): 'CONSERVATIVE' | 'BALANCED' | 'GROWT
 };
 
 const MobileRiskPage = () => {
+  const t = useT();
   const [clientOptions, setClientOptions] = useState<WorkflowCreateClientOption[]>([]);
   const [selectedClientId, setSelectedClientId] = useState(() => getMobileClientId() ?? '');
   const [loadingClients, setLoadingClients] = useState(true);
@@ -924,14 +963,14 @@ const MobileRiskPage = () => {
 
   const handleComplete = async (score: number) => {
     if (!selectedClientId) {
-      setError(toApiError(new Error('Please select a client before submitting risk profile.')));
+      setError(toApiError(new Error(t.mobileRisk.errorSelectClient)));
       return;
     }
     setSubmitting(true);
     try {
       const riskProfile = scoreToRiskProfile(score);
       await wealthApi.updateProfile(selectedClientId, { riskProfile });
-      setSuccessMessage(`Risk profile updated successfully: ${riskProfile}`);
+      setSuccessMessage(t.mobileRisk.riskUpdated.replace('{profile}', riskProfile));
     } catch (err) {
       setError(toApiError(err));
     } finally {
@@ -944,14 +983,14 @@ const MobileRiskPage = () => {
       <ErrorPopup error={error} onClose={() => setError(null)} />
       <SuccessToast message={successMessage} onClose={() => setSuccessMessage(null)} />
       <div className="space-y-2">
-        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">Client</label>
+        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">{t.mobileRisk.client}</label>
         <select
           value={selectedClientId}
           onChange={(e) => setSelectedClientId(e.target.value)}
           disabled={loadingClients || submitting}
           className="w-full px-4 py-3 border border-zinc-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
         >
-          {clientOptions.length === 0 && <option value="">No client available</option>}
+          {clientOptions.length === 0 && <option value="">{t.mobileRisk.noClientAvailable}</option>}
           {clientOptions.map((item) => (
             <option key={item.clientId} value={item.clientId}>
               {item.clientName ?? item.clientId}
@@ -965,6 +1004,16 @@ const MobileRiskPage = () => {
 };
 
 // --- App Entry ---
+
+const ComingSoon = () => {
+  const t = useT();
+  return <div className="p-10 text-center text-slate-400">{t.common.comingSoon}</div>;
+};
+
+const SecureMessagingPlaceholder = () => {
+  const t = useT();
+  return <div className="p-10 text-center text-slate-400">{t.common.secureMessaging}</div>;
+};
 
 export default function App() {
   return (
@@ -1031,7 +1080,7 @@ export default function App() {
             />
             <Route path="/investments" element={<RequireCapability capability="canViewInvestments"><InvestmentCockpit /></RequireCapability>} />
             <Route path="/users" element={<RequireCapability capability="canManagePortalUsers"><UserManagementPage /></RequireCapability>} />
-            <Route path="*" element={<div className="p-10 text-center text-slate-400">Feature Coming Soon</div>} />
+            <Route path="*" element={<ComingSoon />} />
           </Routes>
           </InternalLayout>
           </RequireInternalAuth>
@@ -1045,7 +1094,7 @@ export default function App() {
             <Route path="/risk" element={<MobileRiskPage />} />
             <Route path="/advice" element={<AdvicePreview />} />
             <Route path="/portfolio" element={<MobileWealthGoalsAssetsPage />} />
-            <Route path="/messages" element={<div className="p-10 text-center text-slate-400">Secure Messaging Implementation...</div>} />
+            <Route path="/messages" element={<SecureMessagingPlaceholder />} />
           </Routes>
           </MobileLayout>
         } />

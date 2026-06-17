@@ -5,8 +5,10 @@ import { toApiError, type ApiError } from '../../../services/apiError';
 import { ErrorPopup } from '../../../components/ErrorPopup';
 import { SuccessToast } from '../../../components/SuccessToast';
 import { cn } from '../../../lib/utils';
+import { useT } from '../../../i18n';
 
 export function PlanningTemplateRegistryPage() {
+  const t = useT();
   const [templates, setTemplates] = useState<PlanningTemplateRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -40,7 +42,7 @@ export function PlanningTemplateRegistryPage() {
 
   const handleUpload = async () => {
     if (!docxFile) {
-      setError(toApiError(new Error('DOCX file is required.')));
+      setError(toApiError(new Error(t.planningTemplates.docxRequired)));
       return;
     }
     setSubmitting(true);
@@ -54,7 +56,7 @@ export function PlanningTemplateRegistryPage() {
         docxFile,
         mappingFile,
       });
-      setSuccessMessage(`Template uploaded: ${created.code} v${created.versionNo}`);
+      setSuccessMessage(t.planningTemplates.uploadedToast.replace('{label}', `${created.code} v${created.versionNo}`));
       setDocxFile(null);
       setMappingFile(null);
       await loadTemplates();
@@ -68,7 +70,7 @@ export function PlanningTemplateRegistryPage() {
   const handlePublish = async (templateId: string) => {
     try {
       await wealthApi.publishPlanningTemplate(templateId);
-      setSuccessMessage('Template published.');
+      setSuccessMessage(t.planningTemplates.publishedToast);
       await loadTemplates();
     } catch (err) {
       setError(toApiError(err));
@@ -77,13 +79,13 @@ export function PlanningTemplateRegistryPage() {
 
   const handleDelete = async (item: PlanningTemplateRecord) => {
     const label = `${item.code} v${item.versionNo}`;
-    if (!window.confirm(`Delete template "${label}"? This cannot be undone.`)) {
+    if (!window.confirm(t.planningTemplates.deleteConfirm.replace('{label}', label))) {
       return;
     }
     setDeletingId(item.id);
     try {
       await wealthApi.deletePlanningTemplate(item.id);
-      setSuccessMessage(`Template deleted: ${label}`);
+      setSuccessMessage(t.planningTemplates.deletedToast.replace('{label}', label));
       await loadTemplates();
     } catch (err) {
       setError(toApiError(err));
@@ -98,14 +100,14 @@ export function PlanningTemplateRegistryPage() {
       <SuccessToast message={successMessage} onClose={() => setSuccessMessage(null)} />
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-serif italic text-zinc-900">Planning Template Registry</h1>
+        <h1 className="text-2xl font-serif italic text-zinc-900">{t.planningTemplates.title}</h1>
         <p className="text-sm text-zinc-500 mt-1">
-          Upload DOCX template and optional mapping JSON for planning generation.
+          {t.planningTemplates.subtitle}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">Template code</span>
+            <span className="text-xs text-zinc-500">{t.planningTemplates.templateCode}</span>
             <input
               value={code}
               onChange={(e) => setCode(e.target.value)}
@@ -113,7 +115,7 @@ export function PlanningTemplateRegistryPage() {
             />
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">Name</span>
+            <span className="text-xs text-zinc-500">{t.planningTemplates.name}</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -121,7 +123,7 @@ export function PlanningTemplateRegistryPage() {
             />
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">Version</span>
+            <span className="text-xs text-zinc-500">{t.planningTemplates.version}</span>
             <input
               value={versionNo}
               onChange={(e) => setVersionNo(e.target.value)}
@@ -129,7 +131,7 @@ export function PlanningTemplateRegistryPage() {
             />
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">Locale</span>
+            <span className="text-xs text-zinc-500">{t.planningTemplates.locale}</span>
             <input
               value={locale}
               onChange={(e) => setLocale(e.target.value)}
@@ -137,7 +139,7 @@ export function PlanningTemplateRegistryPage() {
             />
           </label>
           <label className="space-y-1 md:col-span-2">
-            <span className="text-xs text-zinc-500">Product type</span>
+            <span className="text-xs text-zinc-500">{t.planningTemplates.productType}</span>
             <input
               value={productType}
               onChange={(e) => setProductType(e.target.value)}
@@ -145,7 +147,7 @@ export function PlanningTemplateRegistryPage() {
             />
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">DOCX template</span>
+            <span className="text-xs text-zinc-500">{t.planningTemplates.docxTemplate}</span>
             <input
               type="file"
               accept=".docx"
@@ -154,7 +156,7 @@ export function PlanningTemplateRegistryPage() {
             />
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">Mapping JSON (optional)</span>
+            <span className="text-xs text-zinc-500">{t.planningTemplates.mappingJson}</span>
             <input
               type="file"
               accept=".json"
@@ -174,15 +176,15 @@ export function PlanningTemplateRegistryPage() {
           )}
         >
           <Upload className="h-4 w-4" />
-          {submitting ? 'Uploading…' : 'Upload template'}
+          {submitting ? t.planningTemplates.uploading : t.planningTemplates.uploadTemplate}
         </button>
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-zinc-900">Registered templates</h2>
-        {loading ? <p className="text-sm text-zinc-500 mt-3">Loading templates...</p> : null}
+        <h2 className="text-lg font-semibold text-zinc-900">{t.planningTemplates.registeredTemplates}</h2>
+        {loading ? <p className="text-sm text-zinc-500 mt-3">{t.planningTemplates.loadingTemplates}</p> : null}
         {!loading && templates.length === 0 ? (
-          <p className="text-sm text-zinc-500 mt-3">No planning template uploaded yet.</p>
+          <p className="text-sm text-zinc-500 mt-3">{t.planningTemplates.noTemplates}</p>
         ) : null}
         <div className="space-y-3 mt-4">
           {templates.map((item) => (
@@ -192,10 +194,10 @@ export function PlanningTemplateRegistryPage() {
                   {item.code} v{item.versionNo} · {item.name}
                 </p>
                 <p className="text-xs text-zinc-500 flex items-center gap-3">
-                  <span className="inline-flex items-center gap-1"><FileText className="h-3.5 w-3.5" />{item.documentFilename ?? 'template.docx'}</span>
-                  <span className="inline-flex items-center gap-1"><FileJson className="h-3.5 w-3.5" />{item.mappingJson ? 'Mapping loaded' : 'No mapping'}</span>
+                  <span className="inline-flex items-center gap-1"><FileText className="h-3.5 w-3.5" />{item.documentFilename ?? t.planningTemplates.defaultDocxName}</span>
+                  <span className="inline-flex items-center gap-1"><FileJson className="h-3.5 w-3.5" />{item.mappingJson ? t.planningTemplates.mappingLoaded : t.planningTemplates.noMapping}</span>
                   <span>{item.locale}</span>
-                  <span>{item.productType ?? 'GENERAL'}</span>
+                  <span>{item.productType ?? t.planningTemplates.generalProductType}</span>
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -214,7 +216,7 @@ export function PlanningTemplateRegistryPage() {
                     className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold hover:bg-zinc-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    Publish
+                    {t.planningTemplates.publish}
                   </button>
                 ) : null}
                 <button
@@ -229,7 +231,7 @@ export function PlanningTemplateRegistryPage() {
                   )}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  {deletingId === item.id ? 'Deleting…' : 'Delete'}
+                  {deletingId === item.id ? t.planningTemplates.deleting : t.planningTemplates.delete}
                 </button>
               </div>
             </div>
